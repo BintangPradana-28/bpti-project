@@ -1,0 +1,471 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// --------------------------------------------------------
+// 1. AUTHENTICATION & ACCESS CONTROL (Better Auth + RBAC)
+// --------------------------------------------------------
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // RBAC & Org relation
+  roleId        String?
+  role          Role?     @relation(fields: [roleId], references: [id])
+  departmentId  String?
+  department    Department? @relation(fields: [departmentId], references: [id])
+  isActive      Boolean   @default(true)
+
+  // Auth Relations
+  sessions      Session[]
+  accounts      Account[]
+
+  // Domain Relations
+  assignedAssets    Asset[]             @relation("AssetCurrentHolder")
+  assignmentsMade   AssetAssignment[]   @relation("AssignmentActor")
+  assignmentsHeld   AssetAssignment[]   @relation("AssignmentHolder")
+  stockMovements    StockMovement[]
+  transfersMade     AssetTransfer[]     @relation("TransferActor")
+  transfersFrom     AssetTransfer[]     @relation("TransferFromHolder")
+  transfersTo       AssetTransfer[]     @relation("TransferToHolder")
+  maintenanceRequests MaintenanceRecord[] @relation("MaintenanceRequester")
+  auditLogs         AuditLog[]
+
+  @@index([email])
+  @@index([roleId])
+  @@index([departmentId])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Account {
+  id           String    @id @default(cuid())
+  accountId    String
+  providerId   String
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?   @db.Text
+  refreshToken          String?   @db.Text
+  idToken               String?   @db.Text
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  expiresAt             DateTime?
+  password              String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+}
+
+model Role {
+  id          String       @id @default(cuid())
+  name        String       @unique // SUPER_ADMIN, INVENTORY_ADMIN, IT_STAFF, MANAGER, AUDITOR, VIEWER
+  description String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  users       User[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id          String           @id @default(cuid())
+  name        String           @unique // e.g. inventory.create, asset.assign, etc.
+  description String?
+  createdAt   DateTime         @default(now())
+
+  roles       RolePermission[]
+}
+
+model RolePermission {
+  id           String     @id @default(cuid())
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+}
+
+model Department {
+  id          String     @id @default(cuid())
+  code        String     @unique
+  name        String
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  users       User[]
+  locations   Location[]
+  assets      Asset[]
+}
+
+// --------------------------------------------------------
+// 2. LOCATIONS (Hierarchical Location Tree)
+// --------------------------------------------------------
+
+enum LocationType {
+  ORGANIZATION
+  BUILDING
+  FLOOR
+  ROOM
+}
+
+model Location {
+  id           String       @id @default(cuid())
+  code         String       @unique
+  name         String
+  type         LocationType @default(ROOM)
+  description  String?
+  parentId     String?
+  parent       Location?    @relation("LocationHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children     Location[]   @relation("LocationHierarchy")
+  departmentId String?
+  department   Department?  @relation(fields: [departmentId], references: [id])
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  stocks       Stock[]
+  assets       Asset[]
+  assignments  AssetAssignment[]
+  movements    StockMovement[]
+  transfersFrom AssetTransfer[] @relation("TransferFromLocation")
+  transfersTo   AssetTransfer[] @relation("TransferToLocation")
+
+  @@index([parentId])
+  @@index([departmentId])
+}
+
+// --------------------------------------------------------
+// 3. INVENTORY ITEM & STOCK LEDGER
+// --------------------------------------------------------
+
+model Category {
+  id          String          @id @default(cuid())
+  code        String          @unique
+  name        String
+  description String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  items       InventoryItem[]
+}
+
+model InventoryItem {
+  id          String          @id @default(cuid())
+  code        String          @unique
+  name        String
+  description String?         @db.Text
+  categoryId  String
+  category    Category        @relation(fields: [categoryId], references: [id])
+  unit        String          @default("pcs") // pcs, box, roll, meter, etc.
+  minStock    Int             @default(5)
+  maxStock    Int             @default(1000)
+  isActive    Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  stocks      Stock[]
+  movements   StockMovement[]
+  assets      Asset[]
+
+  @@index([categoryId])
+  @@index([code])
+}
+
+model Stock {
+  id          String        @id @default(cuid())
+  itemId      String
+  item        InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  locationId  String
+  location    Location      @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  quantity    Int           @default(0)
+  reservedQty Int           @default(0)
+  updatedAt   DateTime      @updatedAt
+
+  @@unique([itemId, locationId])
+  @@index([itemId])
+  @@index([locationId])
+}
+
+enum MovementType {
+  IN
+  OUT
+  RETURN
+  ADJUSTMENT
+  TRANSFER
+}
+
+model StockMovement {
+  id             String        @id @default(cuid())
+  itemId         String
+  item           InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  locationId     String
+  location       Location      @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  type           MovementType
+  quantity       Int
+  previousQty    Int
+  resultingQty   Int
+  referenceNumber String?
+  reason         String?       @db.Text
+  actorId        String
+  actor          User          @relation(fields: [actorId], references: [id])
+  createdAt      DateTime      @default(now())
+
+  @@index([itemId])
+  @@index([locationId])
+  @@index([actorId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// --------------------------------------------------------
+// 4. INDIVIDUALLY TRACKED ASSETS
+// --------------------------------------------------------
+
+enum AssetStatus {
+  AVAILABLE
+  ASSIGNED
+  IN_USE
+  IN_REPAIR
+  DAMAGED
+  LOST
+  RETIRED
+  DISPOSED
+}
+
+enum AssetCondition {
+  EXCELLENT
+  GOOD
+  FAIR
+  POOR
+  BROKEN
+}
+
+model Asset {
+  id             String          @id @default(cuid())
+  assetTag       String          @unique // e.g., BPTI-LAP-0001
+  serialNumber   String?         @unique
+  name           String
+  brand          String?
+  model          String?
+  itemId         String?
+  item           InventoryItem?  @relation(fields: [itemId], references: [id], onDelete: SetNull)
+  locationId     String?
+  location       Location?       @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  departmentId   String?
+  department     Department?     @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  holderId       String?
+  holder         User?           @relation("AssetCurrentHolder", fields: [holderId], references: [id], onDelete: SetNull)
+  condition      AssetCondition  @default(EXCELLENT)
+  status         AssetStatus     @default(AVAILABLE)
+  purchaseDate   DateTime?
+  purchaseCost   Decimal?        @db.Decimal(12, 2)
+  warrantyExpiry DateTime?
+  qrCode         String?         @db.Text
+  notes          String?         @db.Text
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  assignments    AssetAssignment[]
+  transfers      AssetTransfer[]
+  maintenances   MaintenanceRecord[]
+
+  @@index([assetTag])
+  @@index([serialNumber])
+  @@index([status])
+  @@index([locationId])
+  @@index([holderId])
+  @@index([departmentId])
+  @@index([itemId])
+}
+
+enum AssignmentStatus {
+  ACTIVE
+  RETURNED
+}
+
+model AssetAssignment {
+  id              String           @id @default(cuid())
+  assetId         String
+  asset           Asset            @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  holderId        String
+  holder          User             @relation("AssignmentHolder", fields: [holderId], references: [id], onDelete: Cascade)
+  locationId      String?
+  location        Location?        @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  assignedById    String
+  assignedBy      User             @relation("AssignmentActor", fields: [assignedById], references: [id])
+  assignedAt      DateTime         @default(now())
+  returnedAt      DateTime?
+  returnCondition AssetCondition?
+  status          AssignmentStatus @default(ACTIVE)
+  notes           String?          @db.Text
+
+  @@index([assetId])
+  @@index([holderId])
+  @@index([status])
+}
+
+model AssetTransfer {
+  id              String    @id @default(cuid())
+  assetId         String
+  asset           Asset     @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  fromLocationId  String?
+  fromLocation    Location? @relation("TransferFromLocation", fields: [fromLocationId], references: [id], onDelete: SetNull)
+  toLocationId    String?
+  toLocation      Location? @relation("TransferToLocation", fields: [toLocationId], references: [id], onDelete: SetNull)
+  fromHolderId    String?
+  fromHolder      User?     @relation("TransferFromHolder", fields: [fromHolderId], references: [id], onDelete: SetNull)
+  toHolderId      String?
+  toHolder        User?     @relation("TransferToHolder", fields: [toHolderId], references: [id], onDelete: SetNull)
+  transferredById String
+  transferredBy   User      @relation("TransferActor", fields: [transferredById], references: [id])
+  transferredAt   DateTime  @default(now())
+  reason          String?   @db.Text
+  notes           String?   @db.Text
+
+  @@index([assetId])
+  @@index([transferredById])
+  @@index([transferredAt])
+}
+
+// --------------------------------------------------------
+// 5. ASSET MAINTENANCE WORKFLOW
+// --------------------------------------------------------
+
+enum MaintenancePriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum MaintenanceStatus {
+  REQUESTED
+  APPROVED
+  IN_PROGRESS
+  WAITING_PART
+  COMPLETED
+  CANCELLED
+}
+
+model MaintenanceRecord {
+  id              String              @id @default(cuid())
+  assetId         String
+  asset           Asset               @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  requestedById   String
+  requestedBy     User                @relation("MaintenanceRequester", fields: [requestedById], references: [id])
+  technician      String?
+  title           String
+  description     String              @db.Text
+  priority        MaintenancePriority @default(MEDIUM)
+  status          MaintenanceStatus   @default(REQUESTED)
+  cost            Decimal?            @db.Decimal(12, 2)
+  startedAt       DateTime?
+  completedAt     DateTime?
+  resolutionNotes String?             @db.Text
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@index([assetId])
+  @@index([requestedById])
+  @@index([status])
+  @@index([priority])
+}
+
+// --------------------------------------------------------
+// 6. CENTRALIZED AUDIT LOGGING
+// --------------------------------------------------------
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  timestamp   DateTime @default(now())
+  actorId     String?
+  actor       User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action      String   // e.g., auth.login, stock.adjust, asset.assign, role.update
+  entity      String   // e.g., Asset, InventoryItem, User, Role, StockMovement
+  entityId    String?
+  beforeState Json?
+  afterState  Json?
+  ipAddress   String?
+  userAgent   String?
+  notes       String?  @db.Text
+
+  @@index([actorId])
+  @@index([action])
+  @@index([entity])
+  @@index([timestamp])
+}
+
+// --------------------------------------------------------
+// 7. OPERATIONAL MONITORING & SYSTEM ALERTS
+// --------------------------------------------------------
+
+enum AlertType {
+  LOW_STOCK
+  OUT_OF_STOCK
+  OVERDUE_RETURN
+  MAINTENANCE_DUE
+  MAINTENANCE_OVERDUE
+  UNVERIFIED_ASSET
+}
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+model SystemAlert {
+  id         String        @id @default(cuid())
+  type       AlertType
+  severity   AlertSeverity @default(WARNING)
+  title      String
+  message    String        @db.Text
+  entity     String?
+  entityId   String?
+  isResolved Boolean       @default(false)
+  resolvedAt DateTime?
+  createdAt  DateTime      @default(now())
+
+  @@index([type])
+  @@index([severity])
+  @@index([isResolved])
+  @@index([createdAt])
+}

@@ -1,0 +1,99 @@
+export const PERMISSIONS = {
+  // Inventory
+  INVENTORY_READ: "inventory.read",
+  INVENTORY_CREATE: "inventory.create",
+  INVENTORY_UPDATE: "inventory.update",
+  INVENTORY_DELETE: "inventory.delete",
+  STOCK_TRANSACT: "stock.transact",
+  STOCK_ADJUST: "stock.adjust",
+
+  // Assets
+  ASSET_READ: "asset.read",
+  ASSET_CREATE: "asset.create",
+  ASSET_UPDATE: "asset.update",
+  ASSET_ASSIGN: "asset.assign",
+  ASSET_TRANSFER: "asset.transfer",
+  ASSET_RETIRE: "asset.retire",
+
+  // Maintenance
+  MAINTENANCE_READ: "maintenance.read",
+  MAINTENANCE_CREATE: "maintenance.create",
+  MAINTENANCE_UPDATE: "maintenance.update",
+  MAINTENANCE_APPROVE: "maintenance.approve",
+
+  // Monitoring & Reports
+  MONITORING_READ: "monitoring.read",
+  REPORT_READ: "report.read",
+  REPORT_EXPORT: "report.export",
+
+  // Administration & Audit
+  AUDIT_READ: "audit.read",
+  USER_MANAGE: "user.manage",
+  ROLE_MANAGE: "role.manage",
+  LOCATION_MANAGE: "location.manage",
+} as const;
+
+export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
+
+export const ROLE_DEFAULT_PERMISSIONS: Record<string, PermissionKey[]> = {
+  SUPER_ADMIN: Object.values(PERMISSIONS),
+  INVENTORY_ADMIN: [
+    PERMISSIONS.INVENTORY_READ,
+    PERMISSIONS.INVENTORY_CREATE,
+    PERMISSIONS.INVENTORY_UPDATE,
+    PERMISSIONS.INVENTORY_DELETE,
+    PERMISSIONS.STOCK_TRANSACT,
+    PERMISSIONS.STOCK_ADJUST,
+    PERMISSIONS.ASSET_READ,
+    PERMISSIONS.ASSET_CREATE,
+    PERMISSIONS.ASSET_UPDATE,
+    PERMISSIONS.ASSET_ASSIGN,
+    PERMISSIONS.ASSET_TRANSFER,
+    PERMISSIONS.MONITORING_READ,
+    PERMISSIONS.REPORT_READ,
+    PERMISSIONS.REPORT_EXPORT,
+    PERMISSIONS.LOCATION_MANAGE,
+  ],
+  IT_STAFF: [
+    PERMISSIONS.INVENTORY_READ,
+    PERMISSIONS.ASSET_READ,
+    PERMISSIONS.ASSET_CREATE,
+    PERMISSIONS.ASSET_UPDATE,
+    PERMISSIONS.ASSET_ASSIGN,
+    PERMISSIONS.ASSET_TRANSFER,
+    PERMISSIONS.MAINTENANCE_READ,
+    PERMISSIONS.MAINTENANCE_CREATE,
+    PERMISSIONS.MAINTENANCE_UPDATE,
+    PERMISSIONS.MONITORING_READ,
+  ],
+  MANAGER: [
+    PERMISSIONS.INVENTORY_READ,
+    PERMISSIONS.ASSET_READ,
+    PERMISSIONS.MAINTENANCE_READ,
+    PERMISSIONS.MAINTENANCE_APPROVE,
+    PERMISSIONS.MONITORING_READ,
+    PERMISSIONS.REPORT_READ,
+    PERMISSIONS.REPORT_EXPORT,
+  ],
+  AUDITOR: [
+    PERMISSIONS.INVENTORY_READ,
+    PERMISSIONS.ASSET_READ,
+    PERMISSIONS.MAINTENANCE_READ,
+    PERMISSIONS.MONITORING_READ,
+    PERMISSIONS.REPORT_READ,
+    PERMISSIONS.REPORT_EXPORT,
+    PERMISSIONS.AUDIT_READ,
+  ],
+  VIEWER: [
+    PERMISSIONS.INVENTORY_READ,
+    PERMISSIONS.ASSET_READ,
+    PERMISSIONS.MONITORING_READ,
+  ],
+};
+
+export function hasPermission(
+  userPermissions: string[],
+  requiredPermission: PermissionKey
+): boolean {
+  return userPermissions.includes(requiredPermission);
+}
