@@ -34,8 +34,8 @@ export default async function DashboardPage() {
 
   return (
     <AppShell
-      title="Operational Monitoring"
-      subtitle="Real-time KPI telemetry for BPTI Inventory & Assets"
+      title="Ringkasan Operasional"
+      subtitle="Ringkasan operasional stok barang, status aset, dan aktivitas terkini"
       alertsCount={metrics.alerts.length}
     >
       <div className="space-y-6">
@@ -116,21 +116,27 @@ export default async function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Card 4: Audit Health */}
+          {/* Card 4: Action Required */}
           <Card className="border-slate-800 bg-slate-900/60">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-xs font-semibold text-slate-400 tracking-wider uppercase">
-                System Integrity
+                Aset Perlu Tindakan
               </CardTitle>
-              <ShieldCheck className="h-4 w-4 text-sky-400" />
+              <AlertTriangle className="h-4 w-4 text-amber-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-emerald-400">
-                100% Verified
+              <div className="text-2xl font-bold text-amber-400">
+                {metrics.assets.damaged + metrics.assets.inRepair} Unit
               </div>
-              <p className="text-xs text-slate-400 mt-2">
-                RBAC & immutable audit enabled
-              </p>
+              <div className="flex items-center gap-2 mt-2 text-xs text-slate-400">
+                <span className="text-rose-400 font-medium">
+                  {metrics.assets.damaged} Rusak
+                </span>
+                <span>•</span>
+                <span className="text-amber-400 font-medium">
+                  {metrics.assets.inRepair} Perbaikan
+                </span>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -165,11 +171,9 @@ export default async function DashboardPage() {
           <Card className="border-slate-800 bg-slate-900/60">
             <CardHeader className="flex flex-row items-center justify-between pb-3">
               <CardTitle className="text-sm font-semibold text-white">
-                Recent Stock Movements
+                Mutasi Stok Terbaru
               </CardTitle>
-              <Badge variant="outline" className="text-xs">
-                Ledger
-              </Badge>
+              <span className="text-xs text-slate-400">8 transaksi terakhir</span>
             </CardHeader>
             <CardContent>
               {metrics.recentMovements.length === 0 ? (
@@ -238,11 +242,9 @@ export default async function DashboardPage() {
           <Card className="border-slate-800 bg-slate-900/60">
             <CardHeader className="flex flex-row items-center justify-between pb-3">
               <CardTitle className="text-sm font-semibold text-white">
-                Live Audit Activity Stream
+                Aktivitas Sistem Terkini
               </CardTitle>
-              <Badge variant="outline" className="text-xs">
-                Immutable
-              </Badge>
+              <span className="text-xs text-slate-400">8 log terakhir</span>
             </CardHeader>
             <CardContent>
               {metrics.recentAuditLogs.length === 0 ? (

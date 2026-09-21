@@ -20,13 +20,13 @@ export default async function MaintenancePage() {
 
   return (
     <AppShell
-      title="Maintenance & Work Orders"
-      subtitle="Service tickets, repairs, technician tracking, and asset restoration"
+      title="Pemeliharaan & Servis Aset"
+      subtitle="Pengelolaan tiket perbaikan, pemeliharaan berkala, dan penanganan teknis perangkat"
     >
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="text-sm text-slate-300">
-            Total Tickets: <span className="font-bold text-white">{records.length}</span>
+            Total Tiket: <span className="font-bold text-white">{records.length} tiket</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -40,32 +40,34 @@ export default async function MaintenancePage() {
         <Card className="border-slate-800 bg-slate-900/60">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold text-white">
-              Maintenance Service Queue
+              Antrean Pemeliharaan & Servis
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {records.length === 0 ? (
-              <div className="text-center py-12 text-slate-400 text-sm">
-                No active maintenance or service tickets.
-                <p className="text-xs text-slate-500 mt-1">
-                  All systems and assets are operating normally.
-                </p>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Judul Tiket</TableHead>
+                  <TableHead>Tag Aset</TableHead>
+                  <TableHead>Prioritas</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Teknisi</TableHead>
+                  <TableHead>Biaya</TableHead>
+                  <TableHead className="text-right">Dibuat Pada</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {records.length === 0 ? (
                   <TableRow>
-                    <TableHead>Ticket Title</TableHead>
-                    <TableHead>Asset Tag</TableHead>
-                    <TableHead>Priority</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Technician</TableHead>
-                    <TableHead>Cost</TableHead>
-                    <TableHead className="text-right">Created At</TableHead>
+                    <TableCell colSpan={7} className="text-center py-12 text-slate-400 text-sm">
+                      Tidak ada tiket pemeliharaan aktif.
+                      <p className="text-xs text-slate-500 mt-1">
+                        Semua aset dan perangkat operasional dalam kondisi normal.
+                      </p>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {records.map((rec) => (
+                ) : (
+                  records.map((rec) => (
                     <TableRow key={rec.id}>
                       <TableCell className="font-medium text-white">
                         <div>{rec.title}</div>
@@ -116,10 +118,10 @@ export default async function MaintenancePage() {
                         {formatDate(rec.createdAt)}
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>

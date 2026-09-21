@@ -105,14 +105,11 @@ export function Sidebar() {
         </nav>
       </div>
 
-      {/* System Status Footer */}
-      <div className="border-t border-slate-800/80 pt-4 px-2">
-        <div className="flex items-center justify-between text-xs text-slate-400">
-          <span className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            MySQL 8.4 Online
-          </span>
-          <span className="text-slate-400 font-mono">v1.0.0</span>
+      {/* Organizational Footer */}
+      <div className="border-t border-slate-800/80 pt-3 px-2">
+        <div className="text-[11px] text-slate-400">
+          <div className="font-medium text-slate-400">BPTI Asset System</div>
+          <div className="text-slate-400">Balai Pelatihan TI • v1.0</div>
         </div>
       </div>
     </aside>

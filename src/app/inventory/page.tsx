@@ -19,8 +19,8 @@ export default async function InventoryPage() {
 
   return (
     <AppShell
-      title="Inventory Management"
-      subtitle="Stock ledger control, minimum quantity thresholds, and items catalog"
+      title="Katalog Inventaris"
+      subtitle="Pengelolaan stok barang, batas minimum persediaan, dan mutasi keluar-masuk"
     >
       <div className="space-y-6">
         {/* Actions Bar */}
@@ -55,28 +55,30 @@ export default async function InventoryPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {items.length === 0 ? (
-              <div className="text-center py-12 text-slate-400 text-sm">
-                No inventory items registered in the database yet.
-                <p className="text-xs text-slate-500 mt-1">
-                  Create your first item or run the database seed script to populate sample data.
-                </p>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Kode</TableHead>
+                  <TableHead>Nama Barang</TableHead>
+                  <TableHead>Kategori</TableHead>
+                  <TableHead>Satuan</TableHead>
+                  <TableHead className="text-right">Stok Saat Ini</TableHead>
+                  <TableHead className="text-right">Batas Minimum</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.length === 0 ? (
                   <TableRow>
-                    <TableHead>Code</TableHead>
-                    <TableHead>Item Name</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Unit</TableHead>
-                    <TableHead className="text-right">Current Stock</TableHead>
-                    <TableHead className="text-right">Min Threshold</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableCell colSpan={7} className="text-center py-12 text-slate-400 text-sm">
+                      Belum ada item inventaris yang terdaftar.
+                      <p className="text-xs text-slate-500 mt-1">
+                        Klik tombol &ldquo;Add Item&rdquo; di atas untuk menambahkan barang baru ke katalog.
+                      </p>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {items.map((item) => {
+                ) : (
+                  items.map((item) => {
                     const totalStock = item.stocks.reduce(
                       (sum, s) => sum + s.quantity,
                       0
@@ -106,19 +108,19 @@ export default async function InventoryPage() {
                         </TableCell>
                         <TableCell>
                           {isOutOfStock ? (
-                            <Badge variant="destructive">Out of Stock</Badge>
+                            <Badge variant="destructive">Habis</Badge>
                           ) : isLowStock ? (
-                            <Badge variant="warning">Low Stock</Badge>
+                            <Badge variant="warning">Stok Rendah</Badge>
                           ) : (
-                            <Badge variant="success">In Stock</Badge>
+                            <Badge variant="success">Tersedia</Badge>
                           )}
                         </TableCell>
                       </TableRow>
                     );
-                  })}
-                </TableBody>
-              </Table>
-            )}
+                  })
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>

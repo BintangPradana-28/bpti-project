@@ -30,45 +30,45 @@ export default async function AuditPage() {
 
   return (
     <AppShell
-      title="Immutable Audit Trail"
-      subtitle="Complete chronological record of all administrative, inventory, and security mutations"
+      title="Audit Trail & Riwayat Aktivitas"
+      subtitle="Catatan kronologis aktivitas inventaris, transaksi mutasi, dan perubahan data sistem"
     >
       <div className="space-y-6">
         <Card className="border-slate-800 bg-slate-900/60">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-semibold text-white">
-              System Event Log
+              Log Riwayat Transaksi
             </CardTitle>
-            <Badge variant="outline" className="text-xs text-sky-400 border-sky-500/30">
-              Read Only • Immutable
-            </Badge>
+            <span className="text-xs text-slate-400">50 entri terakhir</span>
           </CardHeader>
           <CardContent>
-            {logs.length === 0 ? (
-              <div className="text-center py-12 text-slate-400 text-sm">
-                No system mutations recorded yet.
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Waktu</TableHead>
+                  <TableHead>Pengguna</TableHead>
+                  <TableHead>Aksi</TableHead>
+                  <TableHead>Entitas</TableHead>
+                  <TableHead>Keterangan</TableHead>
+                  <TableHead className="text-right">Alamat IP</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {logs.length === 0 ? (
                   <TableRow>
-                    <TableHead>Timestamp</TableHead>
-                    <TableHead>Actor</TableHead>
-                    <TableHead>Action</TableHead>
-                    <TableHead>Entity</TableHead>
-                    <TableHead>Notes</TableHead>
-                    <TableHead className="text-right">IP Address</TableHead>
+                    <TableCell colSpan={6} className="text-center py-12 text-slate-400 text-sm">
+                      Belum ada riwayat aktivitas yang tercatat.
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {logs.map((log) => (
+                ) : (
+                  logs.map((log) => (
                     <TableRow key={log.id}>
                       <TableCell className="font-mono text-xs text-slate-400 whitespace-nowrap">
                         {formatDate(log.timestamp)}
                       </TableCell>
                       <TableCell className="text-xs font-medium text-slate-200">
                         {log.actor?.name || (
-                          <span className="text-slate-500 italic">System Automation</span>
+                          <span className="text-slate-500 italic">Sistem Otomatis</span>
                         )}
                       </TableCell>
                       <TableCell>
@@ -86,10 +86,10 @@ export default async function AuditPage() {
                         {log.ipAddress || "127.0.0.1"}
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>

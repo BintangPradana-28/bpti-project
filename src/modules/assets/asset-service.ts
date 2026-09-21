@@ -270,4 +270,128 @@ export class AssetService {
       return updatedAsset;
     });
   }
+
+  static async getAssignments(options?: {
+    search?: string;
+    status?: AssignmentStatus;
+  }) {
+    return prisma.assetAssignment.findMany({
+      where: {
+        ...(options?.status ? { status: options.status } : {}),
+        ...(options?.search
+          ? {
+              OR: [
+                { asset: { assetTag: { contains: options.search } } },
+                { asset: { name: { contains: options.search } } },
+                { holder: { name: { contains: options.search } } },
+                { holder: { email: { contains: options.search } } },
+              ],
+            }
+          : {}),
+      },
+      include: {
+        asset: {
+          select: {
+            id: true,
+            assetTag: true,
+            name: true,
+            brand: true,
+            model: true,
+            condition: true,
+            status: true,
+          },
+        },
+        holder: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        assignedBy: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        location: {
+          select: {
+            id: true,
+            name: true,
+            code: true,
+          },
+        },
+      },
+      orderBy: { assignedAt: "desc" },
+    });
+  }
+
+  static async getTransfers(options?: { search?: string }) {
+    return prisma.assetTransfer.findMany({
+      where: {
+        ...(options?.search
+          ? {
+              OR: [
+                { asset: { assetTag: { contains: options.search } } },
+                { asset: { name: { contains: options.search } } },
+                { reason: { contains: options.search } },
+              ],
+            }
+          : {}),
+      },
+      include: {
+        asset: {
+          select: {
+            id: true,
+            assetTag: true,
+            name: true,
+          },
+        },
+        fromLocation: { select: { id: true, name: true, code: true } },
+        toLocation: { select: { id: true, name: true, code: true } },
+        fromHolder: { select: { id: true, name: true } },
+        toHolder: { select: { id: true, name: true } },
+        transferredBy: { select: { id: true, name: true } },
+      },
+      orderBy: { transferredAt: "desc" },
+    });
+  }
+
+  static async transferAsset(params: {
+    assetId: string;
+    toLocationId?: string;
+    toHolderId?: string;
+    transferredById: string;
+    reason?: string;
+    notes?: string;
+  }) {
+    return prisma.$transaction(async (tx) => {
+      const asset = await tx.asset.findUniqueOrThrow({
+        where: { id: params.assetId },
+      });
+
+      const transfer = await tx.assetTransfer.create({
+        data: {
+          assetId: params.assetId,
+          fromLocationId: asset.locationId,
+          toLocationId: params.toLocationId || asset.locationId,
+          fromHolderId: asset.holderId,
+          toHolderId: params.toHolderId !== undefined ? params.toHolderId : asset.holderId,
+          transferredById: params.transferredById,
+          reason: params.reason,
+          notes: params.notes,
+        },
+      });
+
+      const updatedAsset = await tx.asset.update({
+        where: { id: params.assetId },
+        data: {
+          locationId: params.toLocationId || asset.locationId,
+          holderId: params.toHolderId !== undefined ? params.toHolderId : asset.holderId,
+        },
+      });
+
+      return { asset: updatedAsset, transfer };
+    });
+  }
 }

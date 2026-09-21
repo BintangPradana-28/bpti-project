@@ -40,14 +40,14 @@ export default async function AssetsPage() {
 
   return (
     <AppShell
-      title="Asset Tracking & Management"
-      subtitle="Individually tagged assets, QR barcodes, holders, and lifecycle transitions"
+      title="Pelacakan Aset & Perangkat"
+      subtitle="Pencatatan aset bernomor seri, penanggung jawab, kode QR, dan status siklus pakai"
     >
       <div className="space-y-6">
         {/* Header Action Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="text-sm text-slate-300">
-            Registered Assets: <span className="font-bold text-white">{assets.length}</span>
+            Total Aset: <span className="font-bold text-white">{assets.length} unit</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -62,33 +62,35 @@ export default async function AssetsPage() {
         <Card className="border-slate-800 bg-slate-900/60">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold text-white">
-              Individually Tracked Assets
+              Daftar Aset Terdata
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {assets.length === 0 ? (
-              <div className="text-center py-12 text-slate-400 text-sm">
-                No individual assets tracked yet.
-                <p className="text-xs text-slate-500 mt-1">
-                  Add devices (e.g. laptops, switches, test instruments) to start QR tracking.
-                </p>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Tag ID</TableHead>
+                  <TableHead>Nama Aset</TableHead>
+                  <TableHead>Nomor Seri</TableHead>
+                  <TableHead>Lokasi</TableHead>
+                  <TableHead>Pemegang</TableHead>
+                  <TableHead>Kondisi</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">QR</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {assets.length === 0 ? (
                   <TableRow>
-                    <TableHead>Tag ID</TableHead>
-                    <TableHead>Asset Name</TableHead>
-                    <TableHead>Serial No</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Holder</TableHead>
-                    <TableHead>Condition</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">QR</TableHead>
+                    <TableCell colSpan={8} className="text-center py-12 text-slate-400 text-sm">
+                      Belum ada aset terdaftar.
+                      <p className="text-xs text-slate-500 mt-1">
+                        Klik tombol &ldquo;Register Asset&rdquo; di atas untuk menambahkan unit aset baru.
+                      </p>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {assets.map((asset) => (
+                ) : (
+                  assets.map((asset) => (
                     <TableRow key={asset.id}>
                       <TableCell className="font-mono text-xs font-semibold text-sky-400">
                         {asset.assetTag}
@@ -119,7 +121,7 @@ export default async function AssetsPage() {
                       <TableCell className="text-right">
                         {asset.qrCode ? (
                           <button
-                            title="View QR Code"
+                            title="Lihat Kode QR"
                             className="p-1 rounded bg-slate-800 text-slate-300 hover:text-white"
                           >
                             <QrCode className="h-4 w-4" />
@@ -129,10 +131,10 @@ export default async function AssetsPage() {
                         )}
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>
