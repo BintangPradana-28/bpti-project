@@ -179,10 +179,10 @@ export default async function AssignmentsPage() {
                         )}
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
 
@@ -243,10 +243,10 @@ export default async function AssignmentsPage() {
                         {t.reason || "-"}
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>

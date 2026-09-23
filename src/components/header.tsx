@@ -1,8 +1,9 @@
 "use client";
 
-import { Search, Bell, ShieldCheck, User } from "lucide-react";
+import { Search, Bell, ShieldCheck, User, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { authClient } from "@/lib/auth-client";
 
 interface HeaderProps {
   title: string;
@@ -39,15 +40,23 @@ export function Header({ title, subtitle, alertsCount = 0 }: HeaderProps) {
           )}
         </button>
 
-        {/* User profile & Role chip */}
-        <div className="flex items-center gap-3 pl-3 border-l border-slate-800">
+        {/* User profile, Role chip & Logout */}
+        <div className="flex items-center gap-2 pl-3 border-l border-slate-800">
           <Badge variant="outline" className="text-xs border-sky-500/40 bg-sky-500/10 text-sky-300 gap-1 hidden md:inline-flex">
             <ShieldCheck className="h-3 w-3 text-sky-400" />
             Super Admin
           </Badge>
-          <div className="h-8 w-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300">
-            <User className="h-4 w-4" />
-          </div>
+          <button
+            onClick={async () => {
+              await authClient.signOut();
+              window.location.href = "/login";
+            }}
+            title="Keluar dari akun"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border border-slate-800 hover:border-rose-500/30 transition-colors"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Logout</span>
+          </button>
         </div>
       </div>
     </header>

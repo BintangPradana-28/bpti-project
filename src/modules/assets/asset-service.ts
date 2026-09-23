@@ -221,6 +221,15 @@ export class AssetService {
         },
       });
 
+      await recordAudit({
+        action: "asset.assign",
+        entity: "AssetAssignment",
+        entityId: assignment.id,
+        actorId: params.assignedById,
+        afterState: assignment,
+        notes: `Assigned asset ${asset.assetTag} to holder ${params.holderId}`,
+      });
+
       return { asset: updatedAsset, assignment };
     });
   }
@@ -265,6 +274,15 @@ export class AssetService {
           status: nextStatus,
           condition: params.returnCondition,
         },
+      });
+
+      await recordAudit({
+        action: "asset.return",
+        entity: "AssetAssignment",
+        entityId: assignment.id,
+        actorId: params.actorId,
+        afterState: { returnCondition: params.returnCondition, nextStatus },
+        notes: `Returned asset with condition: ${params.returnCondition}`,
       });
 
       return updatedAsset;
@@ -389,6 +407,15 @@ export class AssetService {
           locationId: params.toLocationId || asset.locationId,
           holderId: params.toHolderId !== undefined ? params.toHolderId : asset.holderId,
         },
+      });
+
+      await recordAudit({
+        action: "asset.transfer",
+        entity: "AssetTransfer",
+        entityId: transfer.id,
+        actorId: params.transferredById,
+        afterState: transfer,
+        notes: `Transferred asset ${asset.assetTag}: ${params.reason || "Relocation"}`,
       });
 
       return { asset: updatedAsset, transfer };

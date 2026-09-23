@@ -184,10 +184,10 @@ export default async function UsersPage() {
                         {formatDate(user.createdAt)}
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
 

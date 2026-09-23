@@ -205,6 +205,16 @@ export class InventoryService {
         });
       }
 
+      await recordAudit({
+        action: `stock.${dto.type.toLowerCase()}`,
+        entity: "Stock",
+        entityId: stock.id,
+        actorId: dto.actorId,
+        beforeState: { quantity: currentQty },
+        afterState: { quantity: newQty },
+        notes: dto.reason || `Stock transaction ${dto.type} of ${dto.quantity} units for item ${item?.code || dto.itemId}`,
+      });
+
       return { stock, movement };
     });
   }

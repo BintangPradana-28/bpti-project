@@ -56,6 +56,15 @@ export class MaintenanceService {
         data: { status: AssetStatus.IN_REPAIR },
       });
 
+      await recordAudit({
+        action: "maintenance.create",
+        entity: "MaintenanceRecord",
+        entityId: ticket.id,
+        actorId: params.requestedById,
+        afterState: ticket,
+        notes: `Created maintenance ticket: ${ticket.title} for asset ${ticket.asset?.assetTag}`,
+      });
+
       return ticket;
     });
   }

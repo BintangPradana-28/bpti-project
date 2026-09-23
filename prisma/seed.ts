@@ -1,4 +1,5 @@
 import { PrismaClient, MovementType, AssetStatus, AssetCondition, LocationType } from "@prisma/client";
+import { hashPassword } from "better-auth/crypto";
 import QRCode from "qrcode";
 
 const prisma = new PrismaClient();
@@ -62,6 +63,28 @@ async function main() {
     },
   });
   console.log("✓ Super Admin seeded: admin@bpti.go.id");
+
+  // Create or update credential Account for Better Auth login
+  const hashedPassword = await hashPassword("AdminBpti2026!");
+  const existingAccount = await prisma.account.findFirst({
+    where: { userId: adminUser.id, providerId: "credential" },
+  });
+  if (existingAccount) {
+    await prisma.account.update({
+      where: { id: existingAccount.id },
+      data: { password: hashedPassword },
+    });
+  } else {
+    await prisma.account.create({
+      data: {
+        accountId: adminUser.id,
+        providerId: "credential",
+        userId: adminUser.id,
+        password: hashedPassword,
+      },
+    });
+  }
+  console.log("✓ Admin Account seeded with password: AdminBpti2026!");
 
   // 4. Locations Tree
   const hq = await prisma.location.upsert({
