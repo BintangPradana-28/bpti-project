@@ -1,5 +1,16 @@
 import { prisma } from "@/lib/prisma";
+import { recordAudit } from "@/lib/audit";
 import { LocationType } from "@prisma/client";
+
+export interface CreateLocationDTO {
+  code: string;
+  name: string;
+  type: LocationType;
+  description?: string;
+  parentId?: string;
+  departmentId?: string;
+  actorId: string;
+}
 
 export class LocationService {
   /**
@@ -73,5 +84,40 @@ export class LocationService {
         },
       },
     });
+  }
+
+  /**
+   * Register a new spatial location node (Building, Floor, Room, etc.)
+   * and record it in the immutable audit log.
+   */
+  static async createLocation(dto: CreateLocationDTO) {
+    const existing = await prisma.location.findUnique({
+      where: { code: dto.code },
+    });
+
+    if (existing) {
+      throw new Error(`Lokasi dengan kode '${dto.code}' sudah terdaftar.`);
+    }
+
+    const location = await prisma.location.create({
+      data: {
+        code: dto.code,
+        name: dto.name,
+        type: dto.type,
+        description: dto.description || null,
+        parentId: dto.parentId || null,
+        departmentId: dto.departmentId || null,
+      },
+    });
+
+    await recordAudit({
+      actorId: dto.actorId,
+      action: "location.create",
+      entity: "Location",
+      entityId: location.id,
+      afterState: location as unknown as Record<string, unknown>,
+    });
+
+    return location;
   }
 }

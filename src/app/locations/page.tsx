@@ -2,20 +2,28 @@ import { AppShell } from "@/components/app-shell";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { MapPin, Building, Layers, Boxes, Laptop, Plus } from "lucide-react";
+import { MapPin, Building, Layers, Boxes, Laptop } from "lucide-react";
 import { LocationService } from "@/modules/locations/location-service";
+import { prisma } from "@/lib/prisma";
+import { LocationModal } from "@/components/modals/location-modal";
 
 export const dynamic = "force-dynamic";
 
 export default async function LocationsPage() {
   type LocationItemType = Awaited<ReturnType<typeof LocationService.getLocations>>[number];
   let locations: LocationItemType[] = [];
+  let departments: Array<{ id: string; name: string; code: string }> = [];
 
   try {
-    locations = await LocationService.getLocations();
+    const [locationsRes, departmentsRes] = await Promise.all([
+      LocationService.getLocations(),
+      prisma.department.findMany({ select: { id: true, name: true, code: true }, orderBy: { name: "asc" } }),
+    ]);
+    locations = locationsRes;
+    departments = departmentsRes;
   } catch {
     locations = [];
+    departments = [];
   }
 
   const orgCount = locations.filter((l) => l.type === "ORGANIZATION").length;
@@ -107,10 +115,7 @@ export default async function LocationsPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button size="sm" className="text-xs">
-              <Plus className="h-3.5 w-3.5" />
-              Add Location
-            </Button>
+            <LocationModal parentLocations={locations} departments={departments} />
           </div>
         </div>
 

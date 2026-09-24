@@ -1,10 +1,8 @@
 import { AppShell } from "@/components/app-shell";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   FileBarChart,
-  Download,
   FileSpreadsheet,
   Boxes,
   Laptop,
@@ -16,6 +14,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { ReportService } from "@/modules/reports/report-service";
+import { ExportButton } from "@/components/reports/export-button";
 
 export const dynamic = "force-dynamic";
 
@@ -34,13 +33,21 @@ export default async function ReportsPage() {
     };
   }
 
-  const exportTemplates = [
+  const exportTemplates: Array<{
+    title: string;
+    description: string;
+    format: string;
+    category: string;
+    icon: typeof Boxes;
+    type: "inventory" | "assets" | "movements" | "maintenance" | "audit";
+  }> = [
     {
       title: "Master Inventory & Stock Ledger",
       description: "Complete list of catalog items, current stock levels, reorder thresholds, and bin locations.",
       format: "CSV / XLSX",
       category: "Inventory",
       icon: Boxes,
+      type: "inventory",
     },
     {
       title: "Asset Custody & Chain-of-Custody",
@@ -48,6 +55,7 @@ export default async function ReportsPage() {
       format: "CSV / XLSX",
       category: "Assets",
       icon: Laptop,
+      type: "assets",
     },
     {
       title: "Stock Opname Reconciliation Sheet",
@@ -55,6 +63,7 @@ export default async function ReportsPage() {
       format: "CSV / Print",
       category: "Auditing",
       icon: FileSpreadsheet,
+      type: "movements",
     },
     {
       title: "Equipment Maintenance & Repair Log",
@@ -62,6 +71,7 @@ export default async function ReportsPage() {
       format: "CSV / PDF",
       category: "Maintenance",
       icon: Wrench,
+      type: "maintenance",
     },
     {
       title: "Security & Transaction Audit Trail",
@@ -69,6 +79,7 @@ export default async function ReportsPage() {
       format: "CSV / JSON",
       category: "Compliance",
       icon: ShieldCheck,
+      type: "audit",
     },
   ];
 
@@ -183,10 +194,7 @@ export default async function ReportsPage() {
                       <span className="font-mono text-[11px] text-slate-500">
                         Format: {template.format}
                       </span>
-                      <Button size="sm" variant="outline" className="text-xs h-7 gap-1.5 hover:bg-sky-500/10 hover:text-sky-400 hover:border-sky-500/30">
-                        <Download className="h-3 w-3" />
-                        Export
-                      </Button>
+                      <ExportButton type={template.type} />
                     </div>
                   </CardContent>
                 </Card>

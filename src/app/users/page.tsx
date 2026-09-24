@@ -2,10 +2,11 @@ import { AppShell } from "@/components/app-shell";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Users, Shield, UserPlus, Laptop, CheckCircle2, XCircle } from "lucide-react";
+import { Users, Shield, Laptop, CheckCircle2, XCircle } from "lucide-react";
 import { UserService } from "@/modules/users/user-service";
 import { formatDate } from "@/lib/utils";
+import { prisma } from "@/lib/prisma";
+import { UserModal } from "@/components/modals/user-modal";
 
 export const dynamic = "force-dynamic";
 
@@ -15,15 +16,21 @@ export default async function UsersPage() {
 
   let users: UserType[] = [];
   let roles: RoleType[] = [];
+  let departments: Array<{ id: string; name: string; code: string }> = [];
 
   try {
-    [users, roles] = await Promise.all([
+    const [usersRes, rolesRes, departmentsRes] = await Promise.all([
       UserService.getUsers(),
       UserService.getRoles(),
+      prisma.department.findMany({ select: { id: true, name: true, code: true }, orderBy: { name: "asc" } }),
     ]);
+    users = usersRes;
+    roles = rolesRes;
+    departments = departmentsRes;
   } catch {
     users = [];
     roles = [];
+    departments = [];
   }
 
   const activeUsersCount = users.filter((u) => u.isActive).length;
@@ -116,10 +123,7 @@ export default async function UsersPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button size="sm" className="text-xs">
-              <UserPlus className="h-3.5 w-3.5" />
-              Invite User
-            </Button>
+            <UserModal roles={roles} departments={departments} />
           </div>
         </div>
 

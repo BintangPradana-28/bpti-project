@@ -1,8 +1,13 @@
 import { PrismaClient, MovementType, AssetStatus, AssetCondition, LocationType } from "@prisma/client";
+import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { hashPassword } from "better-auth/crypto";
 import QRCode from "qrcode";
 
-const prisma = new PrismaClient();
+const connectionString =
+  process.env.DATABASE_URL ||
+  "mysql://bpti_user:bpti_secret_2026@localhost:3306/bpti_db";
+const adapter = new PrismaMariaDb(connectionString);
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log("🌱 Starting BPTI Database Seeding...");
