@@ -2,19 +2,29 @@ import { AppShell } from "@/components/app-shell";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Plus, QrCode } from "lucide-react";
+import { QrCode } from "lucide-react";
 import { AssetService } from "@/modules/assets/asset-service";
+import { prisma } from "@/lib/prisma";
+import { AssetModal } from "@/components/modals/asset-modal";
 
 export const dynamic = "force-dynamic";
 
 export default async function AssetsPage() {
   type AssetType = Awaited<ReturnType<typeof AssetService.getAssets>>[number];
   let assets: AssetType[] = [];
+  let locations: Array<{ id: string; name: string; code: string }> = [];
+  let departments: Array<{ id: string; name: string; code: string }> = [];
+
   try {
-    assets = await AssetService.getAssets();
+    [assets, locations, departments] = await Promise.all([
+      AssetService.getAssets(),
+      prisma.location.findMany({ select: { id: true, name: true, code: true }, orderBy: { name: "asc" } }),
+      prisma.department.findMany({ select: { id: true, name: true, code: true }, orderBy: { name: "asc" } }),
+    ]);
   } catch {
     assets = [];
+    locations = [];
+    departments = [];
   }
 
   const getStatusBadge = (status: string) => {
@@ -51,10 +61,7 @@ export default async function AssetsPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button size="sm" className="text-xs">
-              <Plus className="h-3.5 w-3.5" />
-              Register Asset
-            </Button>
+            <AssetModal locations={locations} departments={departments} />
           </div>
         </div>
 

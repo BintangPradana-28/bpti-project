@@ -22,6 +22,41 @@ export interface StockTransactionDTO {
   referenceNumber?: string;
 }
 
+export function calculateNewStock(
+  currentQty: number,
+  type: MovementType,
+  quantity: number
+): number {
+  if (quantity < 0 || (quantity === 0 && type !== MovementType.ADJUSTMENT)) {
+    throw new Error("Quantity must be greater than zero");
+  }
+
+  switch (type) {
+    case MovementType.IN:
+    case MovementType.RETURN:
+      return currentQty + quantity;
+
+    case MovementType.OUT:
+      if (currentQty < quantity) {
+        throw new Error(
+          `Insufficient stock. Available: ${currentQty}, Requested: ${quantity}`
+        );
+      }
+      return currentQty - quantity;
+
+    case MovementType.ADJUSTMENT:
+      return quantity;
+
+    case MovementType.TRANSFER:
+      if (currentQty < quantity) {
+        throw new Error(
+          `Insufficient stock for transfer. Available: ${currentQty}`
+        );
+      }
+      return currentQty - quantity;
+  }
+}
+
 export class InventoryService {
   static async getItems(options?: {
     search?: string;
@@ -124,37 +159,8 @@ export class InventoryService {
       });
 
       const currentQty = stock ? stock.quantity : 0;
-      let newQty = currentQty;
-
-      // 2. Compute new quantity based on transaction type
-      switch (dto.type) {
-        case MovementType.IN:
-        case MovementType.RETURN:
-          newQty = currentQty + dto.quantity;
-          break;
-
-        case MovementType.OUT:
-          if (currentQty < dto.quantity) {
-            throw new Error(
-              `Insufficient stock. Available: ${currentQty}, Requested: ${dto.quantity}`
-            );
-          }
-          newQty = currentQty - dto.quantity;
-          break;
-
-        case MovementType.ADJUSTMENT:
-          newQty = dto.quantity; // In adjustment, quantity is the reconciled count
-          break;
-
-        case MovementType.TRANSFER:
-          if (currentQty < dto.quantity) {
-            throw new Error(
-              `Insufficient stock for transfer. Available: ${currentQty}`
-            );
-          }
-          newQty = currentQty - dto.quantity;
-          break;
-      }
+      // 2. Compute new quantity based on transaction type using central validated logic
+      const newQty = calculateNewStock(currentQty, dto.type, dto.quantity);
 
       // 3. Upsert stock record
       if (!stock) {

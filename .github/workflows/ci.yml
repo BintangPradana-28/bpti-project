@@ -1,0 +1,46 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    name: Lint, Test & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm db:generate
+
+      - name: Run Typecheck & Lint
+        run: pnpm run lint
+
+      - name: Run Unit Tests
+        run: pnpm test
+
+      - name: Build Application
+        env:
+          DATABASE_URL: "mysql://ci_user:ci_pass@localhost:3306/ci_bpti_db"
+          BETTER_AUTH_SECRET: "ci_secret_super_long_32_characters_key_2026"
+          BETTER_AUTH_URL: "http://localhost:3000"
+        run: pnpm build

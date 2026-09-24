@@ -6,7 +6,7 @@ import { authClient } from "@/lib/auth-client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Building2, Lock, Mail, AlertCircle, ArrowRight, ShieldCheck } from "lucide-react";
+import { Building2, Lock, Mail, AlertCircle, ArrowRight } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -119,18 +119,6 @@ export default function LoginPage() {
             </form>
           </CardContent>
         </Card>
-
-        {/* Demo / Seed Credentials Helper */}
-        <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800/80 text-xs space-y-2">
-          <div className="flex items-center gap-1.5 font-medium text-sky-400">
-            <ShieldCheck className="h-4 w-4" />
-            <span>Kredensial Default (Seeded Administrator)</span>
-          </div>
-          <div className="font-mono text-[11px] text-slate-400 space-y-1 bg-slate-950/60 p-2.5 rounded-lg border border-slate-800">
-            <div>Email: <span className="text-slate-200">admin@bpti.go.id</span></div>
-            <div>Password: <span className="text-slate-200">AdminBpti2026!</span></div>
-          </div>
-        </div>
       </div>
     </div>
   );

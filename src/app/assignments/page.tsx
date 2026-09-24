@@ -2,10 +2,11 @@ import { AppShell } from "@/components/app-shell";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { ArrowRightLeft, UserCheck, RotateCcw, Plus, Clock } from "lucide-react";
+import { ArrowRightLeft, UserCheck, RotateCcw, Clock } from "lucide-react";
 import { AssetService } from "@/modules/assets/asset-service";
 import { formatDate } from "@/lib/utils";
+import { prisma } from "@/lib/prisma";
+import { AssignmentModals } from "@/components/modals/assignment-modal";
 
 export const dynamic = "force-dynamic";
 
@@ -15,16 +16,32 @@ export default async function AssignmentsPage() {
 
   let assignments: AssignmentType[] = [];
   let transfers: TransferType[] = [];
+  let allAssets: Array<{ id: string; assetTag: string; name: string; status: string }> = [];
+  let users: Array<{ id: string; name: string; email: string }> = [];
+  let locations: Array<{ id: string; name: string; code: string }> = [];
 
   try {
-    [assignments, transfers] = await Promise.all([
+    const [assignmentsRes, transfersRes, allAssetsRes, usersRes, locationsRes] = await Promise.all([
       AssetService.getAssignments(),
       AssetService.getTransfers(),
+      prisma.asset.findMany({ select: { id: true, assetTag: true, name: true, status: true }, orderBy: { assetTag: "asc" } }),
+      prisma.user.findMany({ select: { id: true, name: true, email: true }, where: { isActive: true }, orderBy: { name: "asc" } }),
+      prisma.location.findMany({ select: { id: true, name: true, code: true }, orderBy: { name: "asc" } }),
     ]);
+    assignments = assignmentsRes;
+    transfers = transfersRes;
+    allAssets = allAssetsRes;
+    users = usersRes;
+    locations = locationsRes;
   } catch {
     assignments = [];
     transfers = [];
+    allAssets = [];
+    users = [];
+    locations = [];
   }
+
+  const availableAssets = allAssets.filter((a) => a.status === "AVAILABLE");
 
   const activeAssignments = assignments.filter((a) => a.status === "ACTIVE");
   const returnedAssignments = assignments.filter((a) => a.status === "RETURNED");
@@ -95,16 +112,12 @@ export default async function AssignmentsPage() {
             Total Records: <span className="font-bold text-white">{assignments.length} assignments</span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" className="text-xs">
-              <ArrowRightLeft className="h-3.5 w-3.5 text-amber-400" />
-              Transfer Asset
-            </Button>
-            <Button size="sm" className="text-xs">
-              <Plus className="h-3.5 w-3.5" />
-              Assign Asset
-            </Button>
-          </div>
+          <AssignmentModals
+            availableAssets={availableAssets}
+            allAssets={allAssets}
+            users={users}
+            locations={locations}
+          />
         </div>
 
         {/* Active & Historical Assignments Table */}

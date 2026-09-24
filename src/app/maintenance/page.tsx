@@ -2,20 +2,28 @@ import { AppShell } from "@/components/app-shell";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import { MaintenanceService } from "@/modules/maintenance/maintenance-service";
 import { formatDate, formatCurrency } from "@/lib/utils";
+import { prisma } from "@/lib/prisma";
+import { MaintenanceModal } from "@/components/modals/maintenance-modal";
 
 export const dynamic = "force-dynamic";
 
 export default async function MaintenancePage() {
   type RecordType = Awaited<ReturnType<typeof MaintenanceService.getRecords>>[number];
   let records: RecordType[] = [];
+  let assets: Array<{ id: string; assetTag: string; name: string }> = [];
+
   try {
-    records = await MaintenanceService.getRecords();
+    const [recordsRes, assetsRes] = await Promise.all([
+      MaintenanceService.getRecords(),
+      prisma.asset.findMany({ select: { id: true, assetTag: true, name: true }, orderBy: { assetTag: "asc" } }),
+    ]);
+    records = recordsRes;
+    assets = assetsRes;
   } catch {
     records = [];
+    assets = [];
   }
 
   return (
@@ -30,10 +38,7 @@ export default async function MaintenancePage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button size="sm" className="text-xs">
-              <Plus className="h-3.5 w-3.5" />
-              New Work Order
-            </Button>
+            <MaintenanceModal assets={assets} />
           </div>
         </div>
 

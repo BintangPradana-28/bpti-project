@@ -2,19 +2,28 @@ import { AppShell } from "@/components/app-shell";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Plus, ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { InventoryService } from "@/modules/inventory/inventory-service";
+import { prisma } from "@/lib/prisma";
+import { InventoryModals } from "@/components/modals/inventory-modal";
 
 export const dynamic = "force-dynamic";
 
 export default async function InventoryPage() {
   type ItemType = Awaited<ReturnType<typeof InventoryService.getItems>>[number];
   let items: ItemType[] = [];
+  let categories: Array<{ id: string; name: string }> = [];
+  let locations: Array<{ id: string; name: string; code: string }> = [];
+
   try {
-    items = await InventoryService.getItems();
+    [items, categories, locations] = await Promise.all([
+      InventoryService.getItems(),
+      prisma.category.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
+      prisma.location.findMany({ select: { id: true, name: true, code: true }, orderBy: { name: "asc" } }),
+    ]);
   } catch {
     items = [];
+    categories = [];
+    locations = [];
   }
 
   return (
@@ -31,20 +40,16 @@ export default async function InventoryPage() {
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" className="text-xs">
-              <ArrowDownLeft className="h-3.5 w-3.5 text-emerald-400" />
-              Stock In
-            </Button>
-            <Button size="sm" variant="outline" className="text-xs">
-              <ArrowUpRight className="h-3.5 w-3.5 text-rose-400" />
-              Stock Out
-            </Button>
-            <Button size="sm" className="text-xs">
-              <Plus className="h-3.5 w-3.5" />
-              Add Item
-            </Button>
-          </div>
+          <InventoryModals
+            categories={categories}
+            locations={locations}
+            items={items.map((it) => ({
+              id: it.id,
+              name: it.name,
+              code: it.code,
+              unit: it.unit,
+            }))}
+          />
         </div>
 
         {/* Inventory Items Table */}

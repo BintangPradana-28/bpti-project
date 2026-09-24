@@ -4,7 +4,7 @@ import { AssetStatus, AssetCondition, AssignmentStatus } from "@prisma/client";
 import QRCode from "qrcode";
 
 // Legal Asset State Transitions
-const LEGAL_TRANSITIONS: Record<AssetStatus, AssetStatus[]> = {
+export const LEGAL_TRANSITIONS: Record<AssetStatus, AssetStatus[]> = {
   AVAILABLE: [AssetStatus.ASSIGNED, AssetStatus.IN_REPAIR, AssetStatus.DAMAGED, AssetStatus.RETIRED],
   ASSIGNED: [AssetStatus.AVAILABLE, AssetStatus.IN_USE, AssetStatus.IN_REPAIR, AssetStatus.DAMAGED, AssetStatus.LOST],
   IN_USE: [AssetStatus.AVAILABLE, AssetStatus.IN_REPAIR, AssetStatus.DAMAGED, AssetStatus.LOST, AssetStatus.RETIRED],
@@ -14,6 +14,10 @@ const LEGAL_TRANSITIONS: Record<AssetStatus, AssetStatus[]> = {
   RETIRED: [AssetStatus.DISPOSED],
   DISPOSED: [],
 };
+
+export function isValidAssetTransition(from: AssetStatus, to: AssetStatus): boolean {
+  return (LEGAL_TRANSITIONS[from] || []).includes(to);
+}
 
 export interface CreateAssetDTO {
   assetTag: string;

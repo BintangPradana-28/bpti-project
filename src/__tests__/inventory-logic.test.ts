@@ -1,49 +1,38 @@
 import { describe, it, expect } from "vitest";
+import { calculateNewStock } from "@/modules/inventory/inventory-service";
+import { MovementType } from "@prisma/client";
 
-function calculateNewStock(
-  currentQty: number,
-  type: "IN" | "OUT" | "RETURN" | "ADJUSTMENT",
-  qty: number
-): number {
-  if (qty <= 0) {
-    throw new Error("Quantity must be greater than zero");
-  }
-
-  switch (type) {
-    case "IN":
-    case "RETURN":
-      return currentQty + qty;
-    case "OUT":
-      if (currentQty < qty) {
-        throw new Error(`Insufficient stock. Available: ${currentQty}, Requested: ${qty}`);
-      }
-      return currentQty - qty;
-    case "ADJUSTMENT":
-      return qty;
-  }
-}
-
-describe("Stock Calculation & Negative Stock Protection", () => {
+describe("Stock Calculation & Negative Stock Protection (Production Logic)", () => {
   it("increments stock correctly on IN movement", () => {
-    expect(calculateNewStock(10, "IN", 5)).toBe(15);
+    expect(calculateNewStock(10, MovementType.IN, 5)).toBe(15);
   });
 
   it("decrements stock correctly on valid OUT movement", () => {
-    expect(calculateNewStock(20, "OUT", 8)).toBe(12);
+    expect(calculateNewStock(20, MovementType.OUT, 8)).toBe(12);
   });
 
   it("throws error and prevents negative stock on excessive OUT transaction", () => {
-    expect(() => calculateNewStock(5, "OUT", 10)).toThrowError(
+    expect(() => calculateNewStock(5, MovementType.OUT, 10)).toThrowError(
       "Insufficient stock. Available: 5, Requested: 10"
     );
   });
 
-  it("updates stock correctly on physical stock ADJUSTMENT", () => {
-    expect(calculateNewStock(50, "ADJUSTMENT", 42)).toBe(42);
+  it("decrements stock correctly on valid TRANSFER movement", () => {
+    expect(calculateNewStock(15, MovementType.TRANSFER, 5)).toBe(10);
   });
 
-  it("rejects non-positive transaction quantities", () => {
-    expect(() => calculateNewStock(10, "IN", 0)).toThrowError(
+  it("throws error on excessive TRANSFER movement", () => {
+    expect(() => calculateNewStock(3, MovementType.TRANSFER, 10)).toThrowError(
+      "Insufficient stock for transfer. Available: 3"
+    );
+  });
+
+  it("updates stock correctly on physical stock ADJUSTMENT", () => {
+    expect(calculateNewStock(50, MovementType.ADJUSTMENT, 42)).toBe(42);
+  });
+
+  it("rejects non-positive transaction quantities for IN", () => {
+    expect(() => calculateNewStock(10, MovementType.IN, 0)).toThrowError(
       "Quantity must be greater than zero"
     );
   });
