@@ -41,31 +41,54 @@ export class AssetService {
     status?: AssetStatus;
     locationId?: string;
     departmentId?: string;
+    page?: number;
+    pageSize?: number;
   }) {
-    return prisma.asset.findMany({
-      where: {
-        ...(options?.search
-          ? {
-              OR: [
-                { name: { contains: options.search } },
-                { assetTag: { contains: options.search } },
-                { serialNumber: { contains: options.search } },
-                { brand: { contains: options.search } },
-              ],
-            }
-          : {}),
-        ...(options?.status ? { status: options.status } : {}),
-        ...(options?.locationId ? { locationId: options.locationId } : {}),
-        ...(options?.departmentId ? { departmentId: options.departmentId } : {}),
-      },
-      include: {
-        location: true,
-        department: true,
-        holder: { select: { id: true, name: true, email: true } },
-        item: true,
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const page = Math.max(1, options?.page || 1);
+    const pageSize = Math.min(100, Math.max(1, options?.pageSize || 10));
+    const skip = (page - 1) * pageSize;
+
+    const where = {
+      ...(options?.search
+        ? {
+            OR: [
+              { name: { contains: options.search } },
+              { assetTag: { contains: options.search } },
+              { serialNumber: { contains: options.search } },
+              { brand: { contains: options.search } },
+            ],
+          }
+        : {}),
+      ...(options?.status ? { status: options.status } : {}),
+      ...(options?.locationId ? { locationId: options.locationId } : {}),
+      ...(options?.departmentId ? { departmentId: options.departmentId } : {}),
+    };
+
+    const [assets, total] = await Promise.all([
+      prisma.asset.findMany({
+        where,
+        include: {
+          location: true,
+          department: true,
+          holder: { select: { id: true, name: true, email: true } },
+          item: true,
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: pageSize,
+      }),
+      prisma.asset.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / pageSize);
+
+    return {
+      assets,
+      total,
+      page,
+      pageSize,
+      totalPages,
+    };
   }
 
   static async getAssetById(id: string) {

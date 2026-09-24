@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { MonitoringService } from "@/modules/monitoring/monitoring-service";
 import { formatDate } from "@/lib/utils";
+import { MovementChart } from "@/components/dashboard/movement-chart";
+import { AssetStatusChart } from "@/components/dashboard/asset-status-chart";
 
 export const dynamic = "force-dynamic";
 
@@ -23,12 +25,14 @@ export default async function DashboardPage() {
   } catch {
     // Fallback if database is not yet migrated/seeded
     metrics = {
-      assets: { total: 0, available: 0, assigned: 0, inRepair: 0, damaged: 0 },
+      assets: { total: 0, available: 0, assigned: 0, inUse: 0, inRepair: 0, damaged: 0, lost: 0, retired: 0 },
       inventory: { totalItems: 0, lowStockCount: 0, outOfStockCount: 0 },
       maintenance: { openCount: 0 },
       alerts: [],
       recentMovements: [],
       recentAuditLogs: [],
+      movementTrends: [],
+      assetDistribution: [],
     };
   }
 
@@ -164,6 +168,46 @@ export default async function DashboardPage() {
             </div>
           </div>
         )}
+
+        {/* Visual Analytics & Operational Trends */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Movement Trends Area Chart */}
+          <Card className="lg:col-span-7 border-slate-800 bg-slate-900/60">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <div>
+                <CardTitle className="text-sm font-semibold text-white">
+                  Tren Mutasi Keluar-Masuk Stok
+                </CardTitle>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Volume historis barang masuk vs barang keluar (6 bulan)
+                </p>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-2">
+              <MovementChart data={metrics.movementTrends} />
+            </CardContent>
+          </Card>
+
+          {/* Asset Lifecycle Donut Chart */}
+          <Card className="lg:col-span-5 border-slate-800 bg-slate-900/60">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <div>
+                <CardTitle className="text-sm font-semibold text-white">
+                  Distribusi Siklus Hidup Aset
+                </CardTitle>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Proporsi kondisi dan status seluruh unit aset terdaftar
+                </p>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-2">
+              <AssetStatusChart
+                data={metrics.assetDistribution}
+                total={metrics.assets.total}
+              />
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Dual Column: Movements & Audit Stream */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

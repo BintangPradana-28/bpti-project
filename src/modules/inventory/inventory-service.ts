@@ -62,30 +62,53 @@ export class InventoryService {
     search?: string;
     categoryId?: string;
     status?: boolean;
+    page?: number;
+    pageSize?: number;
   }) {
-    return prisma.inventoryItem.findMany({
-      where: {
-        ...(options?.search
-          ? {
-              OR: [
-                { name: { contains: options.search } },
-                { code: { contains: options.search } },
-              ],
-            }
-          : {}),
-        ...(options?.categoryId ? { categoryId: options.categoryId } : {}),
-        ...(options?.status !== undefined ? { isActive: options.status } : {}),
-      },
-      include: {
-        category: true,
-        stocks: {
-          include: {
-            location: true,
+    const page = Math.max(1, options?.page || 1);
+    const pageSize = Math.min(100, Math.max(1, options?.pageSize || 10));
+    const skip = (page - 1) * pageSize;
+
+    const where = {
+      ...(options?.search
+        ? {
+            OR: [
+              { name: { contains: options.search } },
+              { code: { contains: options.search } },
+            ],
+          }
+        : {}),
+      ...(options?.categoryId ? { categoryId: options.categoryId } : {}),
+      ...(options?.status !== undefined ? { isActive: options.status } : {}),
+    };
+
+    const [items, total] = await Promise.all([
+      prisma.inventoryItem.findMany({
+        where,
+        include: {
+          category: true,
+          stocks: {
+            include: {
+              location: true,
+            },
           },
         },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: pageSize,
+      }),
+      prisma.inventoryItem.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / pageSize);
+
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      totalPages,
+    };
   }
 
   static async getItemById(id: string) {
