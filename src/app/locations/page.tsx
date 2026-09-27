@@ -26,7 +26,7 @@ export default async function LocationsPage() {
     departments = [];
   }
 
-  const orgCount = locations.filter((l) => l.type === "ORGANIZATION").length;
+  const _orgCount = locations.filter((l) => l.type === "ORGANIZATION").length;
   const buildingCount = locations.filter((l) => l.type === "BUILDING").length;
   const floorCount = locations.filter((l) => l.type === "FLOOR").length;
   const roomCount = locations.filter((l) => l.type === "ROOM").length;

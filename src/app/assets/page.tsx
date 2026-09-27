@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +7,7 @@ import { QrCode } from "lucide-react";
 import { AssetService } from "@/modules/assets/asset-service";
 import { prisma } from "@/lib/prisma";
 import { AssetModal } from "@/components/modals/asset-modal";
+import { QrScannerModal } from "@/components/assets/qr-scanner-modal";
 import { Pagination } from "@/components/ui/pagination";
 import { TableFilterBar } from "@/components/ui/table-filter-bar";
 import { AssetStatus } from "@prisma/client";
@@ -127,6 +129,7 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
           </div>
 
           <div className="flex items-center gap-2">
+            <QrScannerModal />
             <AssetModal locations={locations} departments={departments} />
           </div>
         </div>
@@ -175,11 +178,21 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
                 ) : (
                   assets.map((asset) => (
                     <TableRow key={asset.id}>
-                      <TableCell className="font-mono text-xs font-semibold text-sky-400">
-                        {asset.assetTag}
+                      <TableCell className="font-mono text-xs font-semibold">
+                        <Link
+                          href={`/assets/${asset.id}`}
+                          className="text-sky-400 hover:text-sky-300 hover:underline"
+                        >
+                          {asset.assetTag}
+                        </Link>
                       </TableCell>
                       <TableCell className="font-medium text-white">
-                        <div>{asset.name}</div>
+                        <Link
+                          href={`/assets/${asset.id}`}
+                          className="hover:text-sky-300 transition-colors block"
+                        >
+                          {asset.name}
+                        </Link>
                         <div className="text-[11px] text-slate-500">
                           {asset.brand} {asset.model}
                         </div>

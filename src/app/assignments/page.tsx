@@ -7,6 +7,7 @@ import { AssetService } from "@/modules/assets/asset-service";
 import { formatDate } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import { AssignmentModals } from "@/components/modals/assignment-modal";
+import { ReturnAssetModal } from "@/components/modals/return-asset-modal";
 
 export const dynamic = "force-dynamic";
 
@@ -140,12 +141,13 @@ export default async function AssignmentsPage() {
                   <TableHead>Tanggal Penetapan</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Kondisi</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {assignments.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-12 text-slate-400 text-sm">
+                    <TableCell colSpan={9} className="text-center py-12 text-slate-400 text-sm">
                       Belum ada catatan penetapan aset.
                       <p className="text-xs text-slate-500 mt-1">
                         Tetapkan aset tersedia ke staf atau pegawai untuk memulai log riwayat pemegang.
@@ -189,6 +191,13 @@ export default async function AssignmentsPage() {
                           <Badge variant="outline">{item.returnCondition}</Badge>
                         ) : (
                           <span className="text-slate-500 font-mono text-xs">{item.asset.condition}</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {item.status === "ACTIVE" ? (
+                          <ReturnAssetModal assignment={item} />
+                        ) : (
+                          <span className="text-slate-500 text-xs italic">Selesai</span>
                         )}
                       </TableCell>
                     </TableRow>

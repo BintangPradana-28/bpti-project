@@ -5,7 +5,6 @@ import {
   Boxes,
   Laptop,
   Wrench,
-  ShieldCheck,
   AlertTriangle,
   ArrowUpRight,
   ArrowDownLeft,

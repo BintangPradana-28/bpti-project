@@ -102,3 +102,42 @@ export async function transferAssetAction(input: TransferAssetInput) {
     };
   }
 }
+
+import { prisma } from "@/lib/prisma";
+
+export async function findAssetByTagAction(tag: string) {
+  try {
+    const raw = tag.trim();
+    if (!raw) {
+      return { success: false, error: "Kode atau Tag QR tidak boleh kosong." };
+    }
+    // Clean URL prefixes if a full QR URL is scanned
+    const cleanTag = raw.replace(/^.*\/assets\//, "");
+
+    const asset = await prisma.asset.findFirst({
+      where: {
+        OR: [
+          { assetTag: cleanTag },
+          { id: cleanTag },
+          { serialNumber: cleanTag },
+        ],
+      },
+      select: { id: true, assetTag: true, name: true, status: true },
+    });
+
+    if (!asset) {
+      return {
+        success: false,
+        error: `Aset dengan Tag atau QR "${raw}" tidak ditemukan dalam database.`,
+      };
+    }
+
+    return { success: true, asset };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Gagal mencari data aset.",
+    };
+  }
+}
+

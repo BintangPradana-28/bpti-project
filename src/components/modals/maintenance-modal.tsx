@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, AlertCircle, CheckCircle2, Wrench } from "lucide-react";
 import { createMaintenanceTicketAction } from "@/actions/maintenance-actions";
-import { MaintenancePriority } from "@prisma/client";
+import { MaintenancePriority } from "@/types/enums";
 
 interface MaintenanceModalProps {
   assets: Array<{ id: string; assetTag: string; name: string }>;

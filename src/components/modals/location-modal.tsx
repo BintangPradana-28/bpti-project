@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, MapPin, AlertCircle, CheckCircle2 } from "lucide-react";
 import { createLocationAction } from "@/actions/location-actions";
-import { LocationType } from "@prisma/client";
+import { LocationType } from "@/types/enums";
 
 interface LocationModalProps {
   parentLocations: Array<{ id: string; name: string; code: string; type: LocationType }>;

@@ -32,7 +32,10 @@ jobs:
       - name: Generate Prisma Client
         run: pnpm db:generate
 
-      - name: Run Typecheck & Lint
+      - name: Run TypeScript Typecheck
+        run: pnpm run typecheck
+
+      - name: Run ESLint
         run: pnpm run lint
 
       - name: Run Unit Tests

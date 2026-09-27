@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Bell, ShieldCheck, User, LogOut } from "lucide-react";
+import { Search, Bell, ShieldCheck, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { authClient } from "@/lib/auth-client";

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, ArrowDownLeft, ArrowUpRight, AlertCircle, CheckCircle2 } from "lucide-react";
 import { createItemAction, transactStockAction } from "@/actions/inventory-actions";
-import { MovementType } from "@prisma/client";
+import { MovementType } from "@/types/enums";
 
 interface InventoryModalsProps {
   categories: Array<{ id: string; name: string }>;

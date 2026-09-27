@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, AlertCircle, CheckCircle2 } from "lucide-react";
 import { createAssetAction } from "@/actions/asset-actions";
-import { AssetCondition } from "@prisma/client";
+import { AssetCondition } from "@/types/enums";
 
 interface AssetModalProps {
   locations: Array<{ id: string; name: string; code: string }>;

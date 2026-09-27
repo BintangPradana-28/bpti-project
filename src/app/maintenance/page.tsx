@@ -6,6 +6,7 @@ import { MaintenanceService } from "@/modules/maintenance/maintenance-service";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import { MaintenanceModal } from "@/components/modals/maintenance-modal";
+import { UpdateMaintenanceModal } from "@/components/modals/update-maintenance-modal";
 
 export const dynamic = "force-dynamic";
 
@@ -58,13 +59,14 @@ export default async function MaintenancePage() {
                   <TableHead>Status</TableHead>
                   <TableHead>Teknisi</TableHead>
                   <TableHead>Biaya</TableHead>
-                  <TableHead className="text-right">Dibuat Pada</TableHead>
+                  <TableHead>Dibuat Pada</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {records.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-12 text-slate-400 text-sm">
+                    <TableCell colSpan={8} className="text-center py-12 text-slate-400 text-sm">
                       Tidak ada tiket pemeliharaan aktif.
                       <p className="text-xs text-slate-500 mt-1">
                         Semua aset dan perangkat operasional dalam kondisi normal.
@@ -119,8 +121,22 @@ export default async function MaintenancePage() {
                       <TableCell className="text-xs text-slate-300 font-mono">
                         {formatCurrency(rec.cost ? Number(rec.cost) : null)}
                       </TableCell>
-                      <TableCell className="text-right text-xs text-slate-400 font-mono">
+                      <TableCell className="text-xs text-slate-400 font-mono">
                         {formatDate(rec.createdAt)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <UpdateMaintenanceModal
+                          ticket={{
+                            id: rec.id,
+                            title: rec.title,
+                            status: rec.status,
+                            cost: rec.cost ? Number(rec.cost) : null,
+                            asset: {
+                              assetTag: rec.asset.assetTag,
+                              name: rec.asset.name,
+                            },
+                          }}
+                        />
                       </TableCell>
                     </TableRow>
                   ))
