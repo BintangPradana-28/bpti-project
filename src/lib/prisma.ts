@@ -6,9 +6,10 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient(): PrismaClient {
-  const connectionString =
-    process.env.DATABASE_URL ||
-    "mysql://bpti_user:bpti_secret_2026@localhost:3306/bpti_db";
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error("DATABASE_URL environment variable is required");
+  }
 
   const adapter = new PrismaMariaDb(connectionString);
 

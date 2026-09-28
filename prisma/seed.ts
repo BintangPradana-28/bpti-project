@@ -3,9 +3,10 @@ import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { hashPassword } from "better-auth/crypto";
 import QRCode from "qrcode";
 
-const connectionString =
-  process.env.DATABASE_URL ||
-  "mysql://bpti_user:bpti_secret_2026@localhost:3306/bpti_db";
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  throw new Error("DATABASE_URL environment variable is required to run seed");
+}
 const adapter = new PrismaMariaDb(connectionString);
 const prisma = new PrismaClient({ adapter });
 
