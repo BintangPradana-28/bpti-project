@@ -15,10 +15,13 @@ import {
 } from "lucide-react";
 import { ReportService } from "@/modules/reports/report-service";
 import { ExportButton } from "@/components/reports/export-button";
+import { requirePagePermission, PERMISSIONS } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function ReportsPage() {
+  await requirePagePermission(PERMISSIONS.REPORT_READ);
+
   type SummaryType = Awaited<ReturnType<typeof ReportService.getSummary>>;
   let summary: SummaryType;
 

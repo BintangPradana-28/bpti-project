@@ -11,39 +11,40 @@ datasource db {
 // --------------------------------------------------------
 
 model User {
-  id            String    @id @default(cuid())
+  id            String   @id @default(cuid())
   name          String
-  email         String    @unique
-  emailVerified Boolean   @default(false)
+  email         String   @unique
+  emailVerified Boolean  @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   // RBAC & Org relation
-  roleId        String?
-  role          Role?     @relation(fields: [roleId], references: [id])
-  departmentId  String?
-  department    Department? @relation(fields: [departmentId], references: [id])
-  isActive      Boolean   @default(true)
+  roleId       String?
+  role         Role?       @relation(fields: [roleId], references: [id])
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+  isActive     Boolean     @default(true)
 
   // Auth Relations
-  sessions      Session[]
-  accounts      Account[]
+  sessions Session[]
+  accounts Account[]
 
   // Domain Relations
-  assignedAssets    Asset[]             @relation("AssetCurrentHolder")
-  assignmentsMade   AssetAssignment[]   @relation("AssignmentActor")
-  assignmentsHeld   AssetAssignment[]   @relation("AssignmentHolder")
-  stockMovements    StockMovement[]
-  transfersMade     AssetTransfer[]     @relation("TransferActor")
-  transfersFrom     AssetTransfer[]     @relation("TransferFromHolder")
-  transfersTo       AssetTransfer[]     @relation("TransferToHolder")
+  assignedAssets      Asset[]             @relation("AssetCurrentHolder")
+  assignmentsMade     AssetAssignment[]   @relation("AssignmentActor")
+  assignmentsHeld     AssetAssignment[]   @relation("AssignmentHolder")
+  stockMovements      StockMovement[]
+  transfersMade       AssetTransfer[]     @relation("TransferActor")
+  transfersFrom       AssetTransfer[]     @relation("TransferFromHolder")
+  transfersTo         AssetTransfer[]     @relation("TransferToHolder")
   maintenanceRequests MaintenanceRecord[] @relation("MaintenanceRequester")
-  auditLogs         AuditLog[]
+  auditLogs           AuditLog[]
 
   @@index([email])
   @@index([roleId])
   @@index([departmentId])
+  @@map("users")
 }
 
 model Session {
@@ -58,14 +59,15 @@ model Session {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@map("sessions")
 }
 
 model Account {
-  id           String    @id @default(cuid())
-  accountId    String
-  providerId   String
-  userId       String
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   accessToken           String?   @db.Text
   refreshToken          String?   @db.Text
   idToken               String?   @db.Text
@@ -74,10 +76,11 @@ model Account {
   scope                 String?
   expiresAt             DateTime?
   password              String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   @@index([userId])
+  @@map("accounts")
 }
 
 model Verification {
@@ -89,26 +92,31 @@ model Verification {
   updatedAt  DateTime @updatedAt
 
   @@index([identifier])
+  @@map("verifications")
 }
 
 model Role {
-  id          String       @id @default(cuid())
-  name        String       @unique // SUPER_ADMIN, INVENTORY_ADMIN, IT_STAFF, MANAGER, AUDITOR, VIEWER
+  id          String   @id @default(cuid())
+  name        String   @unique // SUPER_ADMIN, INVENTORY_ADMIN, IT_STAFF, MANAGER, AUDITOR, VIEWER
   description String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   users       User[]
   permissions RolePermission[]
+
+  @@map("roles")
 }
 
 model Permission {
-  id          String           @id @default(cuid())
-  name        String           @unique // e.g. inventory.create, asset.assign, etc.
+  id          String   @id @default(cuid())
+  name        String   @unique // e.g. inventory.create, asset.assign, etc.
   description String?
-  createdAt   DateTime         @default(now())
+  createdAt   DateTime @default(now())
 
-  roles       RolePermission[]
+  roles RolePermission[]
+
+  @@map("permissions")
 }
 
 model RolePermission {
@@ -121,19 +129,22 @@ model RolePermission {
   @@unique([roleId, permissionId])
   @@index([roleId])
   @@index([permissionId])
+  @@map("role_permissions")
 }
 
 model Department {
-  id          String     @id @default(cuid())
-  code        String     @unique
+  id          String   @id @default(cuid())
+  code        String   @unique
   name        String
   description String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  users       User[]
-  locations   Location[]
-  assets      Asset[]
+  users     User[]
+  locations Location[]
+  assets    Asset[]
+
+  @@map("departments")
 }
 
 // --------------------------------------------------------
@@ -161,15 +172,16 @@ model Location {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
-  stocks       Stock[]
-  assets       Asset[]
-  assignments  AssetAssignment[]
-  movements    StockMovement[]
-  transfersFrom AssetTransfer[] @relation("TransferFromLocation")
-  transfersTo   AssetTransfer[] @relation("TransferToLocation")
+  stocks        Stock[]
+  assets        Asset[]
+  assignments   AssetAssignment[]
+  movements     StockMovement[]
+  transfersFrom AssetTransfer[]   @relation("TransferFromLocation")
+  transfersTo   AssetTransfer[]   @relation("TransferToLocation")
 
   @@index([parentId])
   @@index([departmentId])
+  @@map("locations")
 }
 
 // --------------------------------------------------------
@@ -177,36 +189,39 @@ model Location {
 // --------------------------------------------------------
 
 model Category {
-  id          String          @id @default(cuid())
-  code        String          @unique
+  id          String   @id @default(cuid())
+  code        String   @unique
   name        String
   description String?
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  items       InventoryItem[]
+  items InventoryItem[]
+
+  @@map("categories")
 }
 
 model InventoryItem {
-  id          String          @id @default(cuid())
-  code        String          @unique
+  id          String   @id @default(cuid())
+  code        String   @unique
   name        String
-  description String?         @db.Text
+  description String?  @db.Text
   categoryId  String
-  category    Category        @relation(fields: [categoryId], references: [id])
-  unit        String          @default("pcs") // pcs, box, roll, meter, etc.
-  minStock    Int             @default(5)
-  maxStock    Int             @default(1000)
-  isActive    Boolean         @default(true)
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  category    Category @relation(fields: [categoryId], references: [id])
+  unit        String   @default("pcs") // pcs, box, roll, meter, etc.
+  minStock    Int      @default(5)
+  maxStock    Int      @default(1000)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  stocks      Stock[]
-  movements   StockMovement[]
-  assets      Asset[]
+  stocks    Stock[]
+  movements StockMovement[]
+  assets    Asset[]
 
   @@index([categoryId])
   @@index([code])
+  @@map("inventory_items")
 }
 
 model Stock {
@@ -222,6 +237,7 @@ model Stock {
   @@unique([itemId, locationId])
   @@index([itemId])
   @@index([locationId])
+  @@map("stocks")
 }
 
 enum MovementType {
@@ -233,26 +249,27 @@ enum MovementType {
 }
 
 model StockMovement {
-  id             String        @id @default(cuid())
-  itemId         String
-  item           InventoryItem @relation(fields: [itemId], references: [id], onDelete: Restrict)
-  locationId     String
-  location       Location      @relation(fields: [locationId], references: [id], onDelete: Cascade)
-  type           MovementType
-  quantity       Int
-  previousQty    Int
-  resultingQty   Int
+  id              String        @id @default(cuid())
+  itemId          String
+  item            InventoryItem @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  locationId      String
+  location        Location      @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  type            MovementType
+  quantity        Int
+  previousQty     Int
+  resultingQty    Int
   referenceNumber String?
-  reason         String?       @db.Text
-  actorId        String
-  actor          User          @relation(fields: [actorId], references: [id])
-  createdAt      DateTime      @default(now())
+  reason          String?       @db.Text
+  actorId         String
+  actor           User          @relation(fields: [actorId], references: [id])
+  createdAt       DateTime      @default(now())
 
   @@index([itemId])
   @@index([locationId])
   @@index([actorId])
   @@index([type])
   @@index([createdAt])
+  @@map("stock_movements")
 }
 
 // --------------------------------------------------------
@@ -279,33 +296,37 @@ enum AssetCondition {
 }
 
 model Asset {
-  id             String          @id @default(cuid())
-  assetTag       String          @unique // e.g., BPTI-LAP-0001
-  serialNumber   String?         @unique
-  name           String
-  brand          String?
-  model          String?
-  itemId         String?
-  item           InventoryItem?  @relation(fields: [itemId], references: [id], onDelete: SetNull)
-  locationId     String?
-  location       Location?       @relation(fields: [locationId], references: [id], onDelete: SetNull)
-  departmentId   String?
-  department     Department?     @relation(fields: [departmentId], references: [id], onDelete: SetNull)
-  holderId       String?
-  holder         User?           @relation("AssetCurrentHolder", fields: [holderId], references: [id], onDelete: SetNull)
-  condition      AssetCondition  @default(EXCELLENT)
-  status         AssetStatus     @default(AVAILABLE)
-  purchaseDate   DateTime?
-  purchaseCost   Decimal?        @db.Decimal(12, 2)
-  warrantyExpiry DateTime?
-  qrCode         String?         @db.Text
-  notes          String?         @db.Text
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  id           String         @id @default(cuid())
+  assetTag     String         @unique // e.g., BPTI-LAP-0001
+  serialNumber String?        @unique
+  name         String
+  brand        String?
+  model        String?
+  itemId       String?
+  item         InventoryItem? @relation(fields: [itemId], references: [id], onDelete: SetNull)
+  locationId   String?
+  location     Location?      @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  departmentId String?
+  department   Department?    @relation(fields: [departmentId], references: [id], onDelete: SetNull)
 
-  assignments    AssetAssignment[]
-  transfers      AssetTransfer[]
-  maintenances   MaintenanceRecord[]
+  // Holder (Bisa User internal ber-akun atau diisi nama peminjam manual)
+  holderId        String?
+  holder          User?   @relation("AssetCurrentHolder", fields: [holderId], references: [id], onDelete: SetNull)
+  currentBorrower String? // Catatan cepat admin jika peminjam orang luar
+
+  condition      AssetCondition @default(EXCELLENT)
+  status         AssetStatus    @default(AVAILABLE)
+  purchaseDate   DateTime?
+  purchaseCost   Decimal?       @db.Decimal(12, 2)
+  warrantyExpiry DateTime?
+  qrCode         String?        @db.Text
+  notes          String?        @db.Text
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  assignments  AssetAssignment[]
+  transfers    AssetTransfer[]
+  maintenances MaintenanceRecord[]
 
   @@index([assetTag])
   @@index([serialNumber])
@@ -314,6 +335,7 @@ model Asset {
   @@index([holderId])
   @@index([departmentId])
   @@index([itemId])
+  @@map("assets")
 }
 
 enum AssignmentStatus {
@@ -322,16 +344,27 @@ enum AssignmentStatus {
 }
 
 model AssetAssignment {
-  id              String           @id @default(cuid())
-  assetId         String
-  asset           Asset            @relation(fields: [assetId], references: [id], onDelete: Restrict)
-  holderId        String
-  holder          User             @relation("AssignmentHolder", fields: [holderId], references: [id], onDelete: Cascade)
-  locationId      String?
-  location        Location?        @relation(fields: [locationId], references: [id], onDelete: SetNull)
-  assignedById    String
-  assignedBy      User             @relation("AssignmentActor", fields: [assignedById], references: [id])
+  id      String @id @default(cuid())
+  assetId String
+  asset   Asset  @relation(fields: [assetId], references: [id], onDelete: Restrict)
+
+  // Relasi peminjam fleksibel:
+  // 1. holderId: Jika peminjam adalah user yang memiliki akun
+  holderId String?
+  holder   User?   @relation("AssignmentHolder", fields: [holderId], references: [id], onDelete: SetNull)
+
+  // 2. Kolom manual: Untuk alur single-admin (peminjam luar/staf tanpa akun)
+  borrowerName    String?
+  borrowerContact String?
+  purpose         String? @db.Text
+
+  locationId   String?
+  location     Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  assignedById String
+  assignedBy   User      @relation("AssignmentActor", fields: [assignedById], references: [id])
+
   assignedAt      DateTime         @default(now())
+  dueDate         DateTime? // Perkiraan waktu pengembalian
   returnedAt      DateTime?
   returnCondition AssetCondition?
   status          AssignmentStatus @default(ACTIVE)
@@ -340,6 +373,7 @@ model AssetAssignment {
   @@index([assetId])
   @@index([holderId])
   @@index([status])
+  @@map("asset_assignments")
 }
 
 model AssetTransfer {
@@ -363,6 +397,7 @@ model AssetTransfer {
   @@index([assetId])
   @@index([transferredById])
   @@index([transferredAt])
+  @@map("asset_transfers")
 }
 
 // --------------------------------------------------------
@@ -407,6 +442,7 @@ model MaintenanceRecord {
   @@index([requestedById])
   @@index([status])
   @@index([priority])
+  @@map("maintenance_records")
 }
 
 // --------------------------------------------------------
@@ -418,8 +454,8 @@ model AuditLog {
   timestamp   DateTime @default(now())
   actorId     String?
   actor       User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
-  action      String   // e.g., auth.login, stock.adjust, asset.assign, role.update
-  entity      String   // e.g., Asset, InventoryItem, User, Role, StockMovement
+  action      String // e.g., auth.login, stock.adjust, asset.assign, role.update
+  entity      String // e.g., Asset, InventoryItem, User, Role, StockMovement
   entityId    String?
   beforeState Json?
   afterState  Json?
@@ -431,6 +467,7 @@ model AuditLog {
   @@index([action])
   @@index([entity])
   @@index([timestamp])
+  @@map("audit_logs")
 }
 
 // --------------------------------------------------------
@@ -468,4 +505,5 @@ model SystemAlert {
   @@index([severity])
   @@index([isResolved])
   @@index([createdAt])
+  @@map("system_alerts")
 }

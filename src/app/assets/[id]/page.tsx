@@ -19,6 +19,7 @@ import {
 import { AssetService } from "@/modules/assets/asset-service";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import Image from "next/image";
+import { requirePagePermission, PERMISSIONS } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,8 @@ interface AssetDetailPageProps {
 }
 
 export default async function AssetDetailPage({ params }: AssetDetailPageProps) {
+  await requirePagePermission(PERMISSIONS.ASSET_READ);
+
   const { id } = await params;
   const asset = await AssetService.getAssetById(id);
 
@@ -267,8 +270,10 @@ export default async function AssetDetailPage({ params }: AssetDetailPageProps) 
                   asset.assignments.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell className="font-medium text-white">
-                        {item.holder.name}
-                        <div className="text-[11px] text-slate-500">{item.holder.email}</div>
+                        {item.holder?.name || item.borrowerName || "Peminjam Luar"}
+                        <div className="text-[11px] text-slate-500">
+                          {item.holder?.email || item.borrowerContact || "-"}
+                        </div>
                       </TableCell>
                       <TableCell className="text-xs text-slate-400">
                         {item.assignedBy.name}

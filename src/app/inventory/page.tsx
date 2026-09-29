@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { InventoryModals } from "@/components/modals/inventory-modal";
 import { Pagination } from "@/components/ui/pagination";
 import { TableFilterBar } from "@/components/ui/table-filter-bar";
+import { requirePagePermission, PERMISSIONS } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,8 @@ interface InventoryPageProps {
 }
 
 export default async function InventoryPage({ searchParams }: InventoryPageProps) {
+  await requirePagePermission(PERMISSIONS.INVENTORY_READ);
+
   const resolvedParams = searchParams ? await searchParams : {};
   const search = resolvedParams.search || undefined;
   const categoryId = resolvedParams.categoryId || undefined;

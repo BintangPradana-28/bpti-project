@@ -21,10 +21,11 @@ interface ReturnAssetModalProps {
       name: string;
       condition: string;
     };
-    holder: {
+    holder?: {
       name: string;
       email: string;
-    };
+    } | null;
+    borrowerName?: string | null;
   };
 }
 
@@ -106,7 +107,7 @@ export function ReturnAssetModal({ assignment }: ReturnAssetModalProps) {
             <div className="flex justify-between">
               <span className="text-slate-400">Pemegang Saat Ini:</span>
               <span className="text-slate-300">
-                {assignment.holder.name}
+                {assignment.holder?.name || assignment.borrowerName || "Peminjam Luar"}
               </span>
             </div>
           </div>

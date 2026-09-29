@@ -8,10 +8,13 @@ import { formatDate } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import { AssignmentModals } from "@/components/modals/assignment-modal";
 import { ReturnAssetModal } from "@/components/modals/return-asset-modal";
+import { requirePagePermission, PERMISSIONS } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function AssignmentsPage() {
+  await requirePagePermission(PERMISSIONS.ASSET_READ);
+
   type AssignmentType = Awaited<ReturnType<typeof AssetService.getAssignments>>[number];
   type TransferType = Awaited<ReturnType<typeof AssetService.getTransfers>>[number];
 
@@ -167,8 +170,12 @@ export default async function AssignmentsPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="text-sm text-slate-200">{item.holder.name}</div>
-                        <div className="text-xs text-slate-500">{item.holder.email}</div>
+                        <div className="text-sm text-slate-200">
+                          {item.holder?.name || item.borrowerName || "Peminjam Luar"}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          {item.holder?.email || item.borrowerContact || "-"}
+                        </div>
                       </TableCell>
                       <TableCell className="text-xs text-slate-400">
                         {item.assignedBy.name}

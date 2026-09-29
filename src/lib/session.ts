@@ -71,4 +71,35 @@ export async function requirePermission(permission: PermissionKey) {
   return user;
 }
 
+import { redirect } from "next/navigation";
+
+export async function requirePageAuth() {
+  const user = await getCurrentUser();
+  if (!user || !user.isActive) {
+    redirect("/login");
+  }
+  return user;
+}
+
+export async function requirePagePermission(permission: PermissionKey) {
+  const user = await requirePageAuth();
+  const roleName = user.role?.name;
+
+  const explicitPermissions =
+    user.role?.permissions.map((p) => p.permission.name) || [];
+  const defaultPermissions = roleName
+    ? ROLE_DEFAULT_PERMISSIONS[roleName] || []
+    : [];
+  const allPermissions = Array.from(
+    new Set([...explicitPermissions, ...defaultPermissions])
+  );
+
+  if (!hasPermission(allPermissions, permission)) {
+    redirect("/dashboard?error=unauthorized");
+  }
+
+  return user;
+}
+
 export { PERMISSIONS };
+

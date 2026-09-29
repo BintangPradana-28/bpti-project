@@ -12,7 +12,7 @@ import {
   ReturnAssetInput,
   TransferAssetInput,
 } from "@/lib/validations/asset";
-import { requirePermission, PERMISSIONS } from "@/lib/session";
+import { requirePermission, requireAuth, PERMISSIONS } from "@/lib/session";
 
 export async function createAssetAction(input: CreateAssetInput) {
   try {
@@ -107,12 +107,22 @@ import { prisma } from "@/lib/prisma";
 
 export async function findAssetByTagAction(tag: string) {
   try {
+    await requireAuth();
+
     const raw = tag.trim();
     if (!raw) {
       return { success: false, error: "Kode atau Tag QR tidak boleh kosong." };
     }
     // Clean URL prefixes if a full QR URL is scanned
-    const cleanTag = raw.replace(/^.*\/assets\//, "");
+    let cleanTag = raw.replace(/^.*\/assets\//, "");
+    if (cleanTag.startsWith("{") && cleanTag.endsWith("}")) {
+      try {
+        const parsed = JSON.parse(cleanTag);
+        if (parsed?.tag) cleanTag = String(parsed.tag);
+      } catch {
+        // Fall back to cleanTag as-is
+      }
+    }
 
     const asset = await prisma.asset.findFirst({
       where: {

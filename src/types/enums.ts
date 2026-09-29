@@ -65,3 +65,21 @@ export const LocationType = {
   ROOM: "ROOM",
 } as const;
 export type LocationType = (typeof LocationType)[keyof typeof LocationType];
+
+export const AlertType = {
+  LOW_STOCK: "LOW_STOCK",
+  OUT_OF_STOCK: "OUT_OF_STOCK",
+  OVERDUE_RETURN: "OVERDUE_RETURN",
+  MAINTENANCE_DUE: "MAINTENANCE_DUE",
+  MAINTENANCE_OVERDUE: "MAINTENANCE_OVERDUE",
+  UNVERIFIED_ASSET: "UNVERIFIED_ASSET",
+} as const;
+export type AlertType = (typeof AlertType)[keyof typeof AlertType];
+
+export const AlertSeverity = {
+  INFO: "INFO",
+  WARNING: "WARNING",
+  CRITICAL: "CRITICAL",
+} as const;
+export type AlertSeverity = (typeof AlertSeverity)[keyof typeof AlertSeverity];
+

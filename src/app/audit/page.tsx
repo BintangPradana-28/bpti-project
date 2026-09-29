@@ -2,10 +2,13 @@ import { AppShell } from "@/components/app-shell";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
 import { AuditDataTable } from "@/components/audit/audit-data-table";
+import { requirePagePermission, PERMISSIONS } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function AuditPage() {
+  await requirePagePermission(PERMISSIONS.AUDIT_READ);
+
   type LogType = Awaited<
     ReturnType<
       typeof prisma.auditLog.findMany<{

@@ -7,10 +7,13 @@ import { formatDate, formatCurrency } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import { MaintenanceModal } from "@/components/modals/maintenance-modal";
 import { UpdateMaintenanceModal } from "@/components/modals/update-maintenance-modal";
+import { requirePagePermission, PERMISSIONS } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function MaintenancePage() {
+  await requirePagePermission(PERMISSIONS.MAINTENANCE_READ);
+
   type RecordType = Awaited<ReturnType<typeof MaintenanceService.getRecords>>[number];
   let records: RecordType[] = [];
   let assets: Array<{ id: string; assetTag: string; name: string }> = [];

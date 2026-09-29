@@ -11,6 +11,7 @@ import { QrScannerModal } from "@/components/assets/qr-scanner-modal";
 import { Pagination } from "@/components/ui/pagination";
 import { TableFilterBar } from "@/components/ui/table-filter-bar";
 import { AssetStatus } from "@prisma/client";
+import { requirePagePermission, PERMISSIONS } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,8 @@ interface AssetsPageProps {
 }
 
 export default async function AssetsPage({ searchParams }: AssetsPageProps) {
+  await requirePagePermission(PERMISSIONS.ASSET_READ);
+
   const resolvedParams = searchParams ? await searchParams : {};
   const search = resolvedParams.search || undefined;
   const status = (resolvedParams.status as AssetStatus) || undefined;

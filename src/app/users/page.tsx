@@ -7,10 +7,13 @@ import { UserService } from "@/modules/users/user-service";
 import { formatDate } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import { UserModal } from "@/components/modals/user-modal";
+import { requirePagePermission, PERMISSIONS } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function UsersPage() {
+  await requirePagePermission(PERMISSIONS.USER_MANAGE);
+
   type UserType = Awaited<ReturnType<typeof UserService.getUsers>>[number];
   type RoleType = Awaited<ReturnType<typeof UserService.getRoles>>[number];
 

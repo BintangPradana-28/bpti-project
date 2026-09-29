@@ -6,10 +6,13 @@ import { MapPin, Building, Layers, Boxes, Laptop } from "lucide-react";
 import { LocationService } from "@/modules/locations/location-service";
 import { prisma } from "@/lib/prisma";
 import { LocationModal } from "@/components/modals/location-modal";
+import { requirePageAuth } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function LocationsPage() {
+  await requirePageAuth();
+
   type LocationItemType = Awaited<ReturnType<typeof LocationService.getLocations>>[number];
   let locations: LocationItemType[] = [];
   let departments: Array<{ id: string; name: string; code: string }> = [];

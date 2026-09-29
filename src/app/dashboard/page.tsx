@@ -14,10 +14,13 @@ import { MonitoringService } from "@/modules/monitoring/monitoring-service";
 import { formatDate } from "@/lib/utils";
 import { MovementChart } from "@/components/dashboard/movement-chart";
 import { AssetStatusChart } from "@/components/dashboard/asset-status-chart";
+import { requirePageAuth } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
+  await requirePageAuth();
+
   let metrics;
   try {
     metrics = await MonitoringService.getOperationalMetrics();
