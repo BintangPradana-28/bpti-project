@@ -10,16 +10,3 @@ export const logger = pino({
     asObject: true,
   },
 });
-
-export function logAuditEvent(event: {
-  action: string;
-  actorId?: string;
-  entity: string;
-  entityId?: string;
-  metadata?: Record<string, unknown>;
-}) {
-  logger.info({
-    event: "audit",
-    ...event,
-  });
-}
