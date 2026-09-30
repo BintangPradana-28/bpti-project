@@ -1,10 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
-import mariadb from "mariadb";
+import mariadb, { type Pool } from "mariadb";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
-  pool: mariadb.Pool | undefined;
+  pool: Pool | undefined;
 };
 
 function createPrismaClient(): PrismaClient {
@@ -38,7 +38,9 @@ function createPrismaClient(): PrismaClient {
     globalForPrisma.pool = pool;
   }
 
-  const adapter = new PrismaMariaDb(pool);
+  const adapter = new PrismaMariaDb(
+    pool as unknown as ConstructorParameters<typeof PrismaMariaDb>[0]
+  );
 
   return new PrismaClient({
     adapter,
