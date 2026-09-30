@@ -27,7 +27,12 @@ export function middleware(request: NextRequest) {
   const isLoginPage = pathname === "/login";
 
   // If user is accessing login page while already authenticated, redirect to dashboard
-  if (isLoginPage && sessionToken) {
+  // (unless redirected here with a callback or error, preventing stale-cookie loops)
+  const hasCallbackOrError =
+    request.nextUrl.searchParams.has("callbackUrl") ||
+    request.nextUrl.searchParams.has("error");
+
+  if (isLoginPage && sessionToken && !hasCallbackOrError) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 

@@ -76,7 +76,7 @@ import { redirect } from "next/navigation";
 export async function requirePageAuth() {
   const user = await getCurrentUser();
   if (!user || !user.isActive) {
-    redirect("/login");
+    redirect("/login?callbackUrl=/dashboard");
   }
   return user;
 }
