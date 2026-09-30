@@ -25,6 +25,7 @@ export const assignAssetSchema = z.object({
   assetId: z.string().min(1, "Aset wajib dipilih"),
   holderId: z.string().min(1, "Penanggung jawab (pegawai) wajib dipilih"),
   locationId: z.string().optional(),
+  dueDate: z.coerce.date().optional(),
   notes: z.string().optional(),
 });
 

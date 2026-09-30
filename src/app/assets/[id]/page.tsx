@@ -254,6 +254,7 @@ export default async function AssetDetailPage({ params }: AssetDetailPageProps) 
                   <TableHead>Ditetapkan Oleh</TableHead>
                   <TableHead>Lokasi</TableHead>
                   <TableHead>Tanggal Penetapan</TableHead>
+                  <TableHead>Batas Waktu</TableHead>
                   <TableHead>Tanggal Kembali</TableHead>
                   <TableHead>Kondisi Kembali</TableHead>
                   <TableHead>Status</TableHead>
@@ -262,47 +263,73 @@ export default async function AssetDetailPage({ params }: AssetDetailPageProps) 
               <TableBody>
                 {asset.assignments.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-6 text-slate-500 text-xs">
+                    <TableCell colSpan={8} className="text-center py-6 text-slate-500 text-xs">
                       Belum pernah ada riwayat serah terima penugasan untuk aset ini.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  asset.assignments.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium text-white">
-                        {item.holder?.name || item.borrowerName || "Peminjam Luar"}
-                        <div className="text-[11px] text-slate-500">
-                          {item.holder?.email || item.borrowerContact || "-"}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-xs text-slate-400">
-                        {item.assignedBy.name}
-                      </TableCell>
-                      <TableCell className="text-xs text-slate-400">
-                        {item.location?.name || "-"}
-                      </TableCell>
-                      <TableCell className="text-xs text-slate-400 font-mono">
-                        {formatDate(item.assignedAt)}
-                      </TableCell>
-                      <TableCell className="text-xs text-slate-400 font-mono">
-                        {item.returnedAt ? formatDate(item.returnedAt) : "-"}
-                      </TableCell>
-                      <TableCell className="text-xs">
-                        {item.returnCondition ? (
-                          <Badge variant="outline">{item.returnCondition}</Badge>
-                        ) : (
-                          "-"
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {item.status === "ACTIVE" ? (
-                          <Badge variant="success">Active</Badge>
-                        ) : (
-                          <Badge variant="secondary">Returned</Badge>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  asset.assignments.map((item) => {
+                    const now = new Date();
+                    const isOverdue =
+                      item.status === "ACTIVE" &&
+                      item.dueDate &&
+                      new Date(item.dueDate).getTime() < now.getTime();
+
+                    return (
+                      <TableRow key={item.id}>
+                        <TableCell className="font-medium text-white">
+                          {item.holder?.name || item.borrowerName || "Peminjam Luar"}
+                          <div className="text-[11px] text-slate-500">
+                            {item.holder?.email || item.borrowerContact || "-"}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-xs text-slate-400">
+                          {item.assignedBy.name}
+                        </TableCell>
+                        <TableCell className="text-xs text-slate-400">
+                          {item.location?.name || "-"}
+                        </TableCell>
+                        <TableCell className="text-xs text-slate-400 font-mono">
+                          {formatDate(item.assignedAt)}
+                        </TableCell>
+                        <TableCell className="text-xs font-mono">
+                          {item.dueDate ? (
+                            <div className="space-y-0.5">
+                              <span className="text-slate-300 block">{formatDate(item.dueDate)}</span>
+                              {isOverdue && (
+                                <Badge variant="destructive" className="text-[9px] px-1 py-0">
+                                  Terlambat
+                                </Badge>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-slate-500 italic">Tanpa batas</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-xs text-slate-400 font-mono">
+                          {item.returnedAt ? formatDate(item.returnedAt) : "-"}
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {item.returnCondition ? (
+                            <Badge variant="outline">{item.returnCondition}</Badge>
+                          ) : (
+                            "-"
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {item.status === "ACTIVE" ? (
+                            isOverdue ? (
+                              <Badge variant="destructive">Terlambat</Badge>
+                            ) : (
+                              <Badge variant="success">Active</Badge>
+                            )
+                          ) : (
+                            <Badge variant="secondary">Returned</Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>

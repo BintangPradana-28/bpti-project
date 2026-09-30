@@ -29,6 +29,26 @@ export function canTransferAsset(status: AssetStatus): boolean {
   return !NON_TRANSFERABLE_STATUSES.includes(status);
 }
 
+export function isAssignmentOverdue(
+  dueDate: Date | string | null | undefined,
+  returnedAt?: Date | string | null | undefined,
+  now: Date = new Date()
+): boolean {
+  if (!dueDate || returnedAt) return false;
+  const due = new Date(dueDate);
+  return now.getTime() > due.getTime();
+}
+
+export function getAssignmentRemainingDays(
+  dueDate: Date | string | null | undefined,
+  now: Date = new Date()
+): number | null {
+  if (!dueDate) return null;
+  const due = new Date(dueDate);
+  const diffMs = due.getTime() - now.getTime();
+  return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+}
+
 export interface CreateAssetDTO {
   assetTag: string;
   serialNumber?: string;
@@ -223,6 +243,7 @@ export class AssetService {
     holderId: string;
     locationId?: string;
     assignedById: string;
+    dueDate?: Date;
     notes?: string;
   }) {
     return prisma.$transaction(async (tx) => {
@@ -243,6 +264,7 @@ export class AssetService {
           holderId: params.holderId,
           locationId: params.locationId || asset.locationId,
           assignedById: params.assignedById,
+          dueDate: params.dueDate,
           notes: params.notes,
           status: AssignmentStatus.ACTIVE,
         },

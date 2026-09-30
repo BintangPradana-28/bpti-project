@@ -25,6 +25,7 @@ export function AssignmentModals({
   const [assignAssetId, setAssignAssetId] = useState(availableAssets[0]?.id || "");
   const [assignHolderId, setAssignHolderId] = useState(users[0]?.id || "");
   const [assignLocationId, setAssignLocationId] = useState(locations[0]?.id || "");
+  const [assignDueDate, setAssignDueDate] = useState("");
   const [assignNotes, setAssignNotes] = useState("");
 
   // Transfer Modal state
@@ -48,6 +49,7 @@ export function AssignmentModals({
       assetId: assignAssetId,
       holderId: assignHolderId,
       locationId: assignLocationId || undefined,
+      dueDate: assignDueDate ? new Date(assignDueDate) : undefined,
       notes: assignNotes.trim() || undefined,
     });
 
@@ -60,6 +62,7 @@ export function AssignmentModals({
         setAssignOpen(false);
         setSuccess(null);
         setAssignNotes("");
+        setAssignDueDate("");
       }, 1000);
     }
   };
@@ -193,6 +196,21 @@ export function AssignmentModals({
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs text-slate-300 font-medium">
+              Batas Waktu Pengembalian (Opsional)
+            </label>
+            <Input
+              type="date"
+              value={assignDueDate}
+              onChange={(e) => setAssignDueDate(e.target.value)}
+              className="bg-slate-950 border-slate-800 text-xs text-white"
+            />
+            <p className="text-[10px] text-slate-500">
+              Kosongkan jika aset dipinjamkan jangka panjang tanpa batas waktu tertentu.
+            </p>
           </div>
 
           <div className="space-y-1">
