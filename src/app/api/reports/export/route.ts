@@ -2,22 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requirePermission, PERMISSIONS } from "@/lib/session";
 import { formatDate } from "@/lib/utils";
+import {
+  generateCsv,
+  generateXlsx,
+  generatePdf,
+} from "@/lib/reports-generator";
 
-function escapeCsvCell(val: unknown): string {
-  if (val === null || val === undefined) return "";
-  const str = String(val);
-  if (str.includes(",") || str.includes('"') || str.includes("\n") || str.includes("\r")) {
-    return `"${str.replace(/"/g, '""')}"`;
-  }
-  return str;
-}
-
-function buildCsv(headers: string[], rows: (string | number | null | undefined)[][]): string {
-  const bom = "\uFEFF"; // UTF-8 Byte Order Mark for Microsoft Excel compatibility
-  const headerLine = headers.map(escapeCsvCell).join(",");
-  const rowLines = rows.map((r) => r.map(escapeCsvCell).join(","));
-  return bom + [headerLine, ...rowLines].join("\r\n");
-}
+export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,14 +16,18 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type") || "inventory";
+    const format = (searchParams.get("format") || "csv").toLowerCase();
     const dateStr = new Date().toISOString().split("T")[0];
 
-    let csv = "";
-    let filename = `bpti-report-${type}-${dateStr}.csv`;
+    let reportTitle = "Laporan Operasional";
+    let baseFilename = `bpti-report-${type}-${dateStr}`;
+    let headers: string[] = [];
+    let rows: (string | number | null | undefined)[][] = [];
 
     switch (type) {
       case "inventory": {
-        filename = `bpti-inventaris-katalog-${dateStr}.csv`;
+        reportTitle = "Master Inventaris & Rincian Stok Gudang";
+        baseFilename = `bpti-inventaris-katalog-${dateStr}`;
         const items = await prisma.inventoryItem.findMany({
           include: {
             category: true,
@@ -41,27 +36,27 @@ export async function GET(request: NextRequest) {
           orderBy: { code: "asc" },
         });
 
-        const headers = [
+        headers = [
           "Kode Barang",
           "Nama Barang",
           "Kategori",
           "Satuan",
           "Total Stok",
-          "Stok Minimum",
-          "Stok Maksimum",
+          "Stok Min",
+          "Stok Max",
           "Status Stok",
           "Rincian Lokasi Penyimpanan",
         ];
 
-        const rows = items.map((it) => {
+        rows = items.map((it) => {
           const totalQty = it.stocks.reduce((sum, s) => sum + s.quantity, 0);
           const locationDetails = it.stocks
             .map((s) => `${s.location.name}: ${s.quantity} ${it.unit}`)
             .join(" | ");
 
           let status = "NORMAL";
-          if (totalQty === 0) status = "HABIS (OUT OF STOCK)";
-          else if (totalQty <= it.minStock) status = "KRITIS (LOW STOCK)";
+          if (totalQty === 0) status = "HABIS";
+          else if (totalQty <= it.minStock) status = "LOW STOCK";
 
           return [
             it.code,
@@ -75,13 +70,12 @@ export async function GET(request: NextRequest) {
             locationDetails,
           ];
         });
-
-        csv = buildCsv(headers, rows);
         break;
       }
 
       case "assets": {
-        filename = `bpti-aset-perangkat-${dateStr}.csv`;
+        reportTitle = "Pelacakan Aset & Riwayat Penanggung Jawab";
+        baseFilename = `bpti-aset-perangkat-${dateStr}`;
         const assets = await prisma.asset.findMany({
           include: {
             holder: true,
@@ -91,22 +85,22 @@ export async function GET(request: NextRequest) {
           orderBy: { assetTag: "asc" },
         });
 
-        const headers = [
+        headers = [
           "Tag Aset",
-          "Nama Aset / Perangkat",
+          "Nama Aset",
           "Nomor Seri",
           "Merek",
-          "Model / Tipe",
-          "Status Siklus",
-          "Kondisi Fisik",
+          "Model",
+          "Status",
+          "Kondisi",
           "Penanggung Jawab",
           "Departemen",
           "Lokasi Fisik",
-          "Biaya Pengadaan (IDR)",
+          "Biaya (IDR)",
           "Tanggal Pengadaan",
         ];
 
-        const rows = assets.map((a) => [
+        rows = assets.map((a) => [
           a.assetTag,
           a.name,
           a.serialNumber || "-",
@@ -120,13 +114,12 @@ export async function GET(request: NextRequest) {
           a.purchaseCost ? Number(a.purchaseCost) : 0,
           a.purchaseDate ? formatDate(a.purchaseDate) : "-",
         ]);
-
-        csv = buildCsv(headers, rows);
         break;
       }
 
       case "movements": {
-        filename = `bpti-mutasi-stok-${dateStr}.csv`;
+        reportTitle = "Buku Besar Mutasi & Pergerakan Stok";
+        baseFilename = `bpti-mutasi-stok-${dateStr}`;
         const movements = await prisma.stockMovement.findMany({
           include: {
             item: true,
@@ -137,20 +130,20 @@ export async function GET(request: NextRequest) {
           take: 1000,
         });
 
-        const headers = [
+        headers = [
           "Waktu Mutasi",
           "Kode Barang",
           "Nama Barang",
-          "Tipe Mutasi",
+          "Tipe",
           "Jumlah",
           "Satuan",
           "Lokasi",
-          "No. Referensi / Surat",
-          "Keterangan / Alasan",
-          "Petugas Pencatat",
+          "No. Referensi",
+          "Keterangan",
+          "Petugas",
         ];
 
-        const rows = movements.map((m) => [
+        rows = movements.map((m) => [
           formatDate(m.createdAt),
           m.item.code,
           m.item.name,
@@ -162,13 +155,12 @@ export async function GET(request: NextRequest) {
           m.reason || "-",
           m.actor.name,
         ]);
-
-        csv = buildCsv(headers, rows);
         break;
       }
 
       case "maintenance": {
-        filename = `bpti-servis-pemeliharaan-${dateStr}.csv`;
+        reportTitle = "Rekap Pemeliharaan & Servis Perangkat";
+        baseFilename = `bpti-servis-pemeliharaan-${dateStr}`;
         const records = await prisma.maintenanceRecord.findMany({
           include: {
             asset: true,
@@ -177,22 +169,21 @@ export async function GET(request: NextRequest) {
           orderBy: { createdAt: "desc" },
         });
 
-        const headers = [
+        headers = [
           "ID Tiket",
-          "Judul Perbaikan",
+          "Judul Servis",
           "Tag Aset",
           "Nama Aset",
           "Prioritas",
           "Status Servis",
           "Teknisi PIC",
-          "Estimasi / Biaya Real (IDR)",
+          "Biaya (IDR)",
           "Pelapor",
-          "Catatan Resolusi",
-          "Tanggal Diajukan",
+          "Tanggal Pengajuan",
         ];
 
-        const rows = records.map((r) => [
-          r.id,
+        rows = records.map((r) => [
+          r.id.substring(0, 8),
           r.title,
           r.asset.assetTag,
           r.asset.name,
@@ -201,24 +192,22 @@ export async function GET(request: NextRequest) {
           r.technician || "-",
           r.cost ? Number(r.cost) : 0,
           r.requestedBy.name,
-          r.resolutionNotes || "-",
           formatDate(r.createdAt),
         ]);
-
-        csv = buildCsv(headers, rows);
         break;
       }
 
       case "audit": {
-        filename = `bpti-audit-trail-${dateStr}.csv`;
+        reportTitle = "Jejak Audit Keamanan & Transaksi Sistem";
+        baseFilename = `bpti-audit-trail-${dateStr}`;
         const logs = await prisma.auditLog.findMany({
           include: { actor: true },
           orderBy: { timestamp: "desc" },
           take: 2000,
         });
 
-        const headers = [
-          "Timestamp",
+        headers = [
+          "Waktu",
           "Petugas / Aktor",
           "Email Aktor",
           "Aksi",
@@ -227,17 +216,15 @@ export async function GET(request: NextRequest) {
           "Alamat IP",
         ];
 
-        const rows = logs.map((l) => [
+        rows = logs.map((l) => [
           formatDate(l.timestamp),
-          l.actor ? l.actor.name : "System / Background",
+          l.actor ? l.actor.name : "System",
           l.actor ? l.actor.email : "-",
           l.action,
           l.entity,
           l.entityId,
           l.ipAddress || "-",
         ]);
-
-        csv = buildCsv(headers, rows);
         break;
       }
 
@@ -245,11 +232,36 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: "Tipe laporan tidak valid" }, { status: 400 });
     }
 
+    if (format === "xlsx") {
+      const buffer = await generateXlsx(reportTitle, headers, rows);
+      return new Response(new Uint8Array(buffer), {
+        status: 200,
+        headers: {
+          "Content-Type":
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "Content-Disposition": `attachment; filename="${baseFilename}.xlsx"`,
+        },
+      });
+    }
+
+    if (format === "pdf") {
+      const buffer = await generatePdf(reportTitle, headers, rows);
+      return new Response(new Uint8Array(buffer), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `attachment; filename="${baseFilename}.pdf"`,
+        },
+      });
+    }
+
+    // Default to CSV
+    const csv = generateCsv(headers, rows);
     return new Response(csv, {
       status: 200,
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Disposition": `attachment; filename="${baseFilename}.csv"`,
       },
     });
   } catch (error: unknown) {

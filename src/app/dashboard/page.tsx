@@ -19,7 +19,7 @@ import { requirePageAuth } from "@/lib/session";
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  await requirePageAuth();
+  const user = await requirePageAuth();
 
   let metrics;
   try {
@@ -43,6 +43,11 @@ export default async function DashboardPage() {
       title="Ringkasan Operasional"
       subtitle="Ringkasan operasional stok barang, status aset, dan aktivitas terkini"
       alertsCount={metrics.alerts.length}
+      user={{
+        name: user.name,
+        email: user.email,
+        roleName: user.role?.name,
+      }}
     >
       <div className="space-y-6">
         {/* KPI Grid */}

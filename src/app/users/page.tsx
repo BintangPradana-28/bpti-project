@@ -13,7 +13,7 @@ import { requirePagePermission, PERMISSIONS } from "@/lib/session";
 export const dynamic = "force-dynamic";
 
 export default async function UsersPage() {
-  await requirePagePermission(PERMISSIONS.USER_MANAGE);
+  const currentUser = await requirePagePermission(PERMISSIONS.USER_MANAGE);
 
   type UserType = Awaited<ReturnType<typeof UserService.getUsers>>[number];
   type RoleType = Awaited<ReturnType<typeof UserService.getRoles>>[number];
@@ -63,6 +63,11 @@ export default async function UsersPage() {
     <AppShell
       title="Pengguna & Hak Akses"
       subtitle="Daftar akun pengguna sistem, penugasan peran (RBAC), dan keanggotaan departemen"
+      user={{
+        name: currentUser.name,
+        email: currentUser.email,
+        roleName: currentUser.role?.name,
+      }}
     >
       <div className="space-y-6">
         {/* KPI Grid */}

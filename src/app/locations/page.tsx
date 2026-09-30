@@ -11,7 +11,7 @@ import { requirePageAuth } from "@/lib/session";
 export const dynamic = "force-dynamic";
 
 export default async function LocationsPage() {
-  await requirePageAuth();
+  const currentUser = await requirePageAuth();
 
   type LocationItemType = Awaited<ReturnType<typeof LocationService.getLocations>>[number];
   let locations: LocationItemType[] = [];
@@ -54,6 +54,11 @@ export default async function LocationsPage() {
     <AppShell
       title="Struktur & Hierarki Lokasi"
       subtitle="Pemetaan gedung, lantai, ruangan kerja, dan area penyimpanan aset"
+      user={{
+        name: currentUser.name,
+        email: currentUser.email,
+        roleName: currentUser.role?.name,
+      }}
     >
       <div className="space-y-6">
         {/* KPI Grid */}

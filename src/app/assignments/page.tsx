@@ -13,7 +13,7 @@ import { requirePagePermission, PERMISSIONS } from "@/lib/session";
 export const dynamic = "force-dynamic";
 
 export default async function AssignmentsPage() {
-  await requirePagePermission(PERMISSIONS.ASSET_READ);
+  const currentUser = await requirePagePermission(PERMISSIONS.ASSET_READ);
 
   type AssignmentType = Awaited<ReturnType<typeof AssetService.getAssignments>>[number];
   type TransferType = Awaited<ReturnType<typeof AssetService.getTransfers>>[number];
@@ -58,6 +58,11 @@ export default async function AssignmentsPage() {
     <AppShell
       title="Penetapan & Mutasi Aset"
       subtitle="Pencatatan serah-terima aset, riwayat penanggung jawab, batas waktu pengembalian, dan mutasi lokasi"
+      user={{
+        name: currentUser.name,
+        email: currentUser.email,
+        roleName: currentUser.role?.name,
+      }}
     >
       <div className="space-y-6">
         {/* KPI Summary Cards */}

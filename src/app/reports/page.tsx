@@ -20,7 +20,7 @@ import { requirePagePermission, PERMISSIONS } from "@/lib/session";
 export const dynamic = "force-dynamic";
 
 export default async function ReportsPage() {
-  await requirePagePermission(PERMISSIONS.REPORT_READ);
+  const currentUser = await requirePagePermission(PERMISSIONS.REPORT_READ);
 
   type SummaryType = Awaited<ReturnType<typeof ReportService.getSummary>>;
   let summary: SummaryType;
@@ -47,7 +47,7 @@ export default async function ReportsPage() {
     {
       title: "Master Inventory & Stock Ledger",
       description: "Complete list of catalog items, current stock levels, reorder thresholds, and bin locations.",
-      format: "CSV / XLSX",
+      format: "CSV / XLSX / PDF",
       category: "Inventory",
       icon: Boxes,
       type: "inventory",
@@ -55,7 +55,7 @@ export default async function ReportsPage() {
     {
       title: "Asset Custody & Chain-of-Custody",
       description: "Individually tagged assets, current holders, departments, warranty dates, and assignment history.",
-      format: "CSV / XLSX",
+      format: "CSV / XLSX / PDF",
       category: "Assets",
       icon: Laptop,
       type: "assets",
@@ -63,7 +63,7 @@ export default async function ReportsPage() {
     {
       title: "Stock Opname Reconciliation Sheet",
       description: "Physical audit counting template with system expected counts and discrepancy calculation columns.",
-      format: "CSV / Print",
+      format: "CSV / XLSX / PDF",
       category: "Auditing",
       icon: FileSpreadsheet,
       type: "movements",
@@ -71,7 +71,7 @@ export default async function ReportsPage() {
     {
       title: "Equipment Maintenance & Repair Log",
       description: "Preventive maintenance schedules, corrective repair tickets, costs, and technician sign-offs.",
-      format: "CSV / PDF",
+      format: "CSV / XLSX / PDF",
       category: "Maintenance",
       icon: Wrench,
       type: "maintenance",
@@ -79,7 +79,7 @@ export default async function ReportsPage() {
     {
       title: "Security & Transaction Audit Trail",
       description: "Immutable event logs of all user logins, stock mutations, status updates, and administrative actions.",
-      format: "CSV / JSON",
+      format: "CSV / XLSX / PDF",
       category: "Compliance",
       icon: ShieldCheck,
       type: "audit",
@@ -90,6 +90,11 @@ export default async function ReportsPage() {
     <AppShell
       title="Laporan & Ekspor Data"
       subtitle="Rekapitulasi berkas inventaris, laporan kepemilikan aset, dan ekspor data operasional"
+      user={{
+        name: currentUser.name,
+        email: currentUser.email,
+        roleName: currentUser.role?.name,
+      }}
     >
       <div className="space-y-6">
         {/* KPI Grid */}
@@ -168,7 +173,7 @@ export default async function ReportsPage() {
               <FileBarChart className="h-4 w-4 text-sky-400" />
               Standard Report Generation & Export
             </h3>
-            <span className="text-xs text-slate-400">Formats: CSV, XLSX, JSON</span>
+            <span className="text-xs text-slate-400">Pilihan Berkas: CSV, Excel (.xlsx), Dokumen (.pdf)</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -3,11 +3,9 @@ import { AppShell } from "@/components/app-shell";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
-import { QrCode } from "lucide-react";
 import { AssetService } from "@/modules/assets/asset-service";
 import { prisma } from "@/lib/prisma";
 import { AssetModal } from "@/components/modals/asset-modal";
-import { QrScannerModal } from "@/components/assets/qr-scanner-modal";
 import { Pagination } from "@/components/ui/pagination";
 import { TableFilterBar } from "@/components/ui/table-filter-bar";
 import { AssetStatus } from "@prisma/client";
@@ -26,7 +24,7 @@ interface AssetsPageProps {
 }
 
 export default async function AssetsPage({ searchParams }: AssetsPageProps) {
-  await requirePagePermission(PERMISSIONS.ASSET_READ);
+  const currentUser = await requirePagePermission(PERMISSIONS.ASSET_READ);
 
   const resolvedParams = searchParams ? await searchParams : {};
   const search = resolvedParams.search || undefined;
@@ -121,7 +119,12 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
   return (
     <AppShell
       title="Pelacakan Aset & Perangkat"
-      subtitle="Pencatatan aset bernomor seri, penanggung jawab, kode QR, dan status siklus pakai"
+      subtitle="Pencatatan aset bernomor seri, penanggung jawab, dan status siklus pakai"
+      user={{
+        name: currentUser.name,
+        email: currentUser.email,
+        roleName: currentUser.role?.name,
+      }}
     >
       <div className="space-y-5">
         {/* Header Action Bar */}
@@ -132,7 +135,6 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <QrScannerModal />
             <AssetModal locations={locations} departments={departments} />
           </div>
         </div>
@@ -160,14 +162,13 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
                   <TableHead>Lokasi</TableHead>
                   <TableHead>Pemegang</TableHead>
                   <TableHead>Kondisi</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">QR</TableHead>
+                  <TableHead className="text-right">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {assets.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-12 text-slate-400 text-sm">
+                    <TableCell colSpan={7} className="text-center py-12 text-slate-400 text-sm">
                       {search || status || locationId || departmentId
                         ? "Tidak ada unit aset yang cocok dengan filter atau kata kunci."
                         : "Belum ada aset terdaftar."}
@@ -216,19 +217,7 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
                           {asset.condition.toLowerCase()}
                         </span>
                       </TableCell>
-                      <TableCell>{getStatusBadge(asset.status)}</TableCell>
-                      <TableCell className="text-right">
-                        {asset.qrCode ? (
-                          <span
-                            title={`Kode QR: ${asset.qrCode}`}
-                            className="inline-flex p-1 rounded bg-slate-800 text-sky-400"
-                          >
-                            <QrCode className="h-4 w-4" />
-                          </span>
-                        ) : (
-                          "-"
-                        )}
-                      </TableCell>
+                      <TableCell className="text-right">{getStatusBadge(asset.status)}</TableCell>
                     </TableRow>
                   ))
                 )}

@@ -7,7 +7,6 @@ import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@
 import {
   ChevronLeft,
   Laptop,
-  QrCode,
   MapPin,
   User,
   DollarSign,
@@ -18,7 +17,6 @@ import {
 } from "lucide-react";
 import { AssetService } from "@/modules/assets/asset-service";
 import { formatDate, formatCurrency } from "@/lib/utils";
-import Image from "next/image";
 import { requirePagePermission, PERMISSIONS } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -30,7 +28,7 @@ interface AssetDetailPageProps {
 }
 
 export default async function AssetDetailPage({ params }: AssetDetailPageProps) {
-  await requirePagePermission(PERMISSIONS.ASSET_READ);
+  const currentUser = await requirePagePermission(PERMISSIONS.ASSET_READ);
 
   const { id } = await params;
   const asset = await AssetService.getAssetById(id);
@@ -64,7 +62,12 @@ export default async function AssetDetailPage({ params }: AssetDetailPageProps) 
   return (
     <AppShell
       title={`Detail Aset: ${asset.name}`}
-      subtitle={`Spesifikasi teknis, kode identifikasi QR, dan riwayat penugasan unit ${asset.assetTag}`}
+      subtitle={`Spesifikasi teknis, riwayat mutasi, dan status siklus pakai unit ${asset.assetTag}`}
+      user={{
+        name: currentUser.name,
+        email: currentUser.email,
+        roleName: currentUser.role?.name,
+      }}
     >
       <div className="space-y-6">
         {/* Navigation Bar */}
@@ -106,33 +109,6 @@ export default async function AssetDetailPage({ params }: AssetDetailPageProps) 
                   </p>
                 </div>
               </div>
-
-              {/* QR Code Container */}
-              {asset.qrCode && (
-                <div className="flex items-center gap-3 p-3 rounded-lg border border-slate-800 bg-slate-950/80 shrink-0">
-                  <Image
-                    src={asset.qrCode}
-                    alt={`QR Code ${asset.assetTag}`}
-                    width={64}
-                    height={64}
-                    className="h-16 w-16 rounded bg-white p-1"
-                  />
-                  <div className="text-xs space-y-0.5">
-                    <div className="flex items-center gap-1 font-semibold text-slate-200">
-                      <QrCode className="h-3.5 w-3.5 text-sky-400" />
-                      QR Tag ID
-                    </div>
-                    <div className="font-mono text-[11px] text-slate-400">{asset.assetTag}</div>
-                    <a
-                      href={asset.qrCode}
-                      download={`QR-${asset.assetTag}.png`}
-                      className="text-[11px] text-sky-400 hover:underline block pt-1"
-                    >
-                      Unduh QR Code
-                    </a>
-                  </div>
-                </div>
-              )}
             </div>
           </CardContent>
         </Card>

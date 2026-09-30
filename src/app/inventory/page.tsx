@@ -20,7 +20,7 @@ interface InventoryPageProps {
 }
 
 export default async function InventoryPage({ searchParams }: InventoryPageProps) {
-  await requirePagePermission(PERMISSIONS.INVENTORY_READ);
+  const currentUser = await requirePagePermission(PERMISSIONS.INVENTORY_READ);
 
   const resolvedParams = searchParams ? await searchParams : {};
   const search = resolvedParams.search || undefined;
@@ -80,6 +80,11 @@ export default async function InventoryPage({ searchParams }: InventoryPageProps
     <AppShell
       title="Katalog Inventaris"
       subtitle="Pengelolaan stok barang, batas minimum persediaan, dan mutasi keluar-masuk"
+      user={{
+        name: currentUser.name,
+        email: currentUser.email,
+        roleName: currentUser.role?.name,
+      }}
     >
       <div className="space-y-5">
         {/* Actions Bar */}

@@ -7,7 +7,7 @@ import { requirePagePermission, PERMISSIONS } from "@/lib/session";
 export const dynamic = "force-dynamic";
 
 export default async function AuditPage() {
-  await requirePagePermission(PERMISSIONS.AUDIT_READ);
+  const currentUser = await requirePagePermission(PERMISSIONS.AUDIT_READ);
 
   type LogType = Awaited<
     ReturnType<
@@ -45,6 +45,11 @@ export default async function AuditPage() {
     <AppShell
       title="Audit Trail & Riwayat Aktivitas"
       subtitle="Catatan kronologis aktivitas inventaris, transaksi mutasi, dan perubahan data sistem"
+      user={{
+        name: currentUser.name,
+        email: currentUser.email,
+        roleName: currentUser.role?.name,
+      }}
     >
       <div className="space-y-6">
         <Card className="border-slate-800 bg-slate-900/60">

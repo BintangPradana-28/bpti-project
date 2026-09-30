@@ -12,7 +12,7 @@ import { requirePagePermission, PERMISSIONS } from "@/lib/session";
 export const dynamic = "force-dynamic";
 
 export default async function MaintenancePage() {
-  await requirePagePermission(PERMISSIONS.MAINTENANCE_READ);
+  const currentUser = await requirePagePermission(PERMISSIONS.MAINTENANCE_READ);
 
   type RecordType = Awaited<ReturnType<typeof MaintenanceService.getRecords>>[number];
   let records: RecordType[] = [];
@@ -34,6 +34,11 @@ export default async function MaintenancePage() {
     <AppShell
       title="Pemeliharaan & Servis Aset"
       subtitle="Pengelolaan tiket perbaikan, pemeliharaan berkala, dan penanganan teknis perangkat"
+      user={{
+        name: currentUser.name,
+        email: currentUser.email,
+        roleName: currentUser.role?.name,
+      }}
     >
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
