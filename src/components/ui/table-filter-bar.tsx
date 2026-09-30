@@ -2,7 +2,8 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search, X, RotateCcw } from "lucide-react";
-import { useCallback, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export interface FilterOption {
   value: string;
@@ -29,7 +30,15 @@ export function TableFilterBar({
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
-  const currentSearch = searchParams.get("search") || "";
+  const urlSearch = searchParams.get("search") || "";
+  const [searchTerm, setSearchTerm] = useState(urlSearch);
+  const debouncedSearch = useDebounce(searchTerm, 350);
+  const isFirstMount = useRef(true);
+
+  // Sync local input state if URL changes externally (e.g., reset button or back button)
+  useEffect(() => {
+    setSearchTerm(urlSearch);
+  }, [urlSearch]);
 
   const updateParam = useCallback(
     (key: string, value: string | null) => {
@@ -49,7 +58,21 @@ export function TableFilterBar({
     [router, pathname, searchParams]
   );
 
+  // Apply debounced search to URL query param
+  useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+    const currentParam = searchParams.get("search") || "";
+    const trimmed = debouncedSearch.trim();
+    if (trimmed !== currentParam) {
+      updateParam("search", trimmed || null);
+    }
+  }, [debouncedSearch, updateParam, searchParams]);
+
   const resetAllFilters = useCallback(() => {
+    setSearchTerm("");
     startTransition(() => {
       router.push(pathname);
     });
@@ -67,17 +90,17 @@ export function TableFilterBar({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
           <input
             type="text"
-            defaultValue={currentSearch}
+            value={searchTerm}
             placeholder={searchPlaceholder}
-            onChange={(e) => {
-              const val = e.target.value.trim();
-              updateParam("search", val || null);
-            }}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full h-8 pl-8 pr-7 rounded-md border border-slate-700 bg-slate-950/80 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-sky-400 focus:border-sky-400 transition-colors"
           />
-          {currentSearch && (
+          {searchTerm && (
             <button
-              onClick={() => updateParam("search", null)}
+              onClick={() => {
+                setSearchTerm("");
+                updateParam("search", null);
+              }}
               className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-0.5"
               title="Hapus pencarian"
             >

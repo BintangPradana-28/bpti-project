@@ -2,11 +2,12 @@ import { AppShell } from "@/components/app-shell";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
-import { Users, Shield, Laptop, CheckCircle2, XCircle } from "lucide-react";
+import { Users, Shield, Laptop, CheckCircle2 } from "lucide-react";
 import { UserService } from "@/modules/users/user-service";
 import { formatDate } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import { UserModal } from "@/components/modals/user-modal";
+import { UserStatusToggle } from "@/components/users/user-status-toggle";
 import { requirePagePermission, PERMISSIONS } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -175,17 +176,11 @@ export default async function UsersPage() {
                         {user._count?.assignedAssets || 0}
                       </TableCell>
                       <TableCell>
-                        {user.isActive ? (
-                          <div className="inline-flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                            Active
-                          </div>
-                        ) : (
-                          <div className="inline-flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-                            <XCircle className="h-3.5 w-3.5" />
-                            Inactive
-                          </div>
-                        )}
+                        <UserStatusToggle
+                          userId={user.id}
+                          isActive={user.isActive}
+                          userName={user.name}
+                        />
                       </TableCell>
                       <TableCell className="text-xs text-slate-400">
                         {formatDate(user.createdAt)}

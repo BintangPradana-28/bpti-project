@@ -19,6 +19,16 @@ export function isValidAssetTransition(from: AssetStatus, to: AssetStatus): bool
   return (LEGAL_TRANSITIONS[from] || []).includes(to);
 }
 
+export const NON_TRANSFERABLE_STATUSES: readonly AssetStatus[] = [
+  AssetStatus.DISPOSED,
+  AssetStatus.RETIRED,
+  AssetStatus.LOST,
+];
+
+export function canTransferAsset(status: AssetStatus): boolean {
+  return !NON_TRANSFERABLE_STATUSES.includes(status);
+}
+
 export interface CreateAssetDTO {
   assetTag: string;
   serialNumber?: string;
@@ -414,6 +424,12 @@ export class AssetService {
       const asset = await tx.asset.findUniqueOrThrow({
         where: { id: params.assetId },
       });
+
+      if (!canTransferAsset(asset.status)) {
+        throw new Error(
+          `Tidak dapat mentransfer aset dengan status '${asset.status}'.`
+        );
+      }
 
       const transfer = await tx.assetTransfer.create({
         data: {

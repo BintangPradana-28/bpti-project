@@ -174,7 +174,7 @@ export default async function DashboardPage() {
         {/* Visual Analytics & Operational Trends */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Movement Trends Area Chart */}
-          <Card className="lg:col-span-7 border-slate-800 bg-slate-900/60">
+          <Card className="lg:col-span-7 border-slate-800 bg-slate-900/60 overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <div>
                 <CardTitle className="text-sm font-semibold text-white">
@@ -185,13 +185,13 @@ export default async function DashboardPage() {
                 </p>
               </div>
             </CardHeader>
-            <CardContent className="pt-2">
+            <CardContent className="pt-2 overflow-hidden">
               <MovementChart data={metrics.movementTrends} />
             </CardContent>
           </Card>
 
           {/* Asset Lifecycle Donut Chart */}
-          <Card className="lg:col-span-5 border-slate-800 bg-slate-900/60">
+          <Card className="lg:col-span-5 border-slate-800 bg-slate-900/60 overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <div>
                 <CardTitle className="text-sm font-semibold text-white">
@@ -202,7 +202,7 @@ export default async function DashboardPage() {
                 </p>
               </div>
             </CardHeader>
-            <CardContent className="pt-2">
+            <CardContent className="pt-2 overflow-hidden">
               <AssetStatusChart
                 data={metrics.assetDistribution}
                 total={metrics.assets.total}

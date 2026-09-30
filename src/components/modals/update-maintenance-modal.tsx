@@ -14,6 +14,24 @@ import { Wrench, AlertCircle, CheckCircle2 } from "lucide-react";
 import { updateMaintenanceStatusAction } from "@/actions/maintenance-actions";
 import { MaintenanceStatus } from "@/types/enums";
 
+const LEGAL_TRANSITIONS: Record<string, MaintenanceStatus[]> = {
+  REQUESTED: [MaintenanceStatus.APPROVED, MaintenanceStatus.CANCELLED],
+  APPROVED: [MaintenanceStatus.IN_PROGRESS, MaintenanceStatus.CANCELLED],
+  IN_PROGRESS: [MaintenanceStatus.WAITING_PART, MaintenanceStatus.COMPLETED, MaintenanceStatus.CANCELLED],
+  WAITING_PART: [MaintenanceStatus.IN_PROGRESS, MaintenanceStatus.CANCELLED],
+  COMPLETED: [],
+  CANCELLED: [],
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  REQUESTED: "REQUESTED (Permintaan Baru)",
+  APPROVED: "APPROVED (Disetujui untuk Servis)",
+  IN_PROGRESS: "IN_PROGRESS (Sedang Dikerjakan)",
+  WAITING_PART: "WAITING_PART (Menunggu Suku Cadang)",
+  COMPLETED: "COMPLETED (Selesai & Berfungsi Kembali)",
+  CANCELLED: "CANCELLED (Dibatalkan)",
+};
+
 interface UpdateMaintenanceModalProps {
   ticket: {
     id: string;
@@ -28,9 +46,12 @@ interface UpdateMaintenanceModalProps {
 }
 
 export function UpdateMaintenanceModal({ ticket }: UpdateMaintenanceModalProps) {
+  const allowedNextStatuses = LEGAL_TRANSITIONS[ticket.status] || [];
+  const isTerminal = allowedNextStatuses.length === 0;
+
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<MaintenanceStatus>(
-    (ticket.status as MaintenanceStatus) || MaintenanceStatus.IN_PROGRESS
+    allowedNextStatuses[0] || (ticket.status as MaintenanceStatus)
   );
   const [cost, setCost] = useState(ticket.cost ? String(ticket.cost) : "");
   const [resolutionNotes, setResolutionNotes] = useState("");
@@ -69,11 +90,12 @@ export function UpdateMaintenanceModal({ ticket }: UpdateMaintenanceModalProps) 
         size="sm"
         variant="outline"
         onClick={() => setOpen(true)}
-        className="h-7 px-2 text-[11px] gap-1 border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-amber-400 hover:text-white"
-        title="Ubah status pengerjaan tiket pemeliharaan"
+        disabled={isTerminal}
+        className="h-7 px-2 text-[11px] gap-1 border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-amber-400 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+        title={isTerminal ? "Tiket telah berstatus akhir" : "Ubah status pengerjaan tiket pemeliharaan"}
       >
         <Wrench className="h-3 w-3" />
-        Update Status
+        {isTerminal ? "Ditutup" : "Update Status"}
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -135,12 +157,11 @@ export function UpdateMaintenanceModal({ ticket }: UpdateMaintenanceModalProps) 
                 className="w-full h-9 rounded-md border border-slate-700 bg-slate-950 px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-sky-400 cursor-pointer"
                 required
               >
-                <option value={MaintenanceStatus.REQUESTED}>REQUESTED (Permintaan Baru)</option>
-                <option value={MaintenanceStatus.APPROVED}>APPROVED (Disetujui untuk Servis)</option>
-                <option value={MaintenanceStatus.IN_PROGRESS}>IN_PROGRESS (Sedang Dikerjakan)</option>
-                <option value={MaintenanceStatus.WAITING_PART}>WAITING_PART (Menunggu Suku Cadang)</option>
-                <option value={MaintenanceStatus.COMPLETED}>COMPLETED (Selesai & Berfungsi Kembali)</option>
-                <option value={MaintenanceStatus.CANCELLED}>CANCELLED (Dibatalkan)</option>
+                {allowedNextStatuses.map((st) => (
+                  <option key={st} value={st}>
+                    {STATUS_LABELS[st] || st}
+                  </option>
+                ))}
               </select>
               <p className="text-[11px] text-slate-500 mt-1">
                 Memilih &ldquo;COMPLETED&rdquo; akan mengembalikan status unit aset terkait ke &ldquo;AVAILABLE&rdquo;.

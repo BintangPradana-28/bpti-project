@@ -128,4 +128,37 @@ export class UserService {
 
     return user;
   }
+
+  /**
+   * Toggle the active status of an existing user (activate/deactivate).
+   */
+  static async toggleUserStatus(userId: string, actorId: string) {
+    const existing = await prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+    });
+
+    // Prevent deactivating own account
+    if (existing.id === actorId) {
+      throw new Error("Tidak dapat menonaktifkan akun sendiri.");
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: { isActive: !existing.isActive },
+    });
+
+    await recordAudit({
+      actorId,
+      action: "user.toggle_status",
+      entity: "User",
+      entityId: updated.id,
+      beforeState: { isActive: existing.isActive },
+      afterState: { isActive: updated.isActive },
+      notes: `User ${updated.name} (${updated.email}) status changed to ${
+        updated.isActive ? "ACTIVE" : "INACTIVE"
+      }`,
+    });
+
+    return updated;
+  }
 }

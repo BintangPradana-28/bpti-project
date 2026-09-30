@@ -2,6 +2,30 @@ import { prisma } from "@/lib/prisma";
 import { recordAudit } from "@/lib/audit";
 import { MaintenanceStatus, MaintenancePriority, AssetStatus } from "@prisma/client";
 
+export const LEGAL_MAINTENANCE_TRANSITIONS: Record<MaintenanceStatus, MaintenanceStatus[]> = {
+  [MaintenanceStatus.REQUESTED]: [MaintenanceStatus.APPROVED, MaintenanceStatus.CANCELLED],
+  [MaintenanceStatus.APPROVED]: [MaintenanceStatus.IN_PROGRESS, MaintenanceStatus.CANCELLED],
+  [MaintenanceStatus.IN_PROGRESS]: [MaintenanceStatus.WAITING_PART, MaintenanceStatus.COMPLETED, MaintenanceStatus.CANCELLED],
+  [MaintenanceStatus.WAITING_PART]: [MaintenanceStatus.IN_PROGRESS, MaintenanceStatus.CANCELLED],
+  [MaintenanceStatus.COMPLETED]: [],
+  [MaintenanceStatus.CANCELLED]: [],
+};
+
+export function isValidMaintenanceTransition(from: MaintenanceStatus, to: MaintenanceStatus): boolean {
+  return LEGAL_MAINTENANCE_TRANSITIONS[from]?.includes(to) ?? false;
+}
+
+export const INELIGIBLE_MAINTENANCE_STATUSES: readonly AssetStatus[] = [
+  AssetStatus.RETIRED,
+  AssetStatus.DISPOSED,
+  AssetStatus.LOST,
+  AssetStatus.IN_REPAIR,
+];
+
+export function canCreateMaintenanceTicket(assetStatus: AssetStatus): boolean {
+  return !INELIGIBLE_MAINTENANCE_STATUSES.includes(assetStatus);
+}
+
 export class MaintenanceService {
   static async getRecords(options?: {
     status?: MaintenanceStatus;
@@ -36,6 +60,17 @@ export class MaintenanceService {
     priority?: MaintenancePriority;
   }) {
     return prisma.$transaction(async (tx) => {
+      const asset = await tx.asset.findUniqueOrThrow({
+        where: { id: params.assetId },
+      });
+
+      // Assets in RETIRED, DISPOSED, LOST, or already IN_REPAIR cannot enter maintenance
+      if (!canCreateMaintenanceTicket(asset.status)) {
+        throw new Error(
+          `Tidak dapat membuka tiket pemeliharaan untuk aset dengan status '${asset.status}'.`
+        );
+      }
+
       const ticket = await tx.maintenanceRecord.create({
         data: {
           assetId: params.assetId,
@@ -82,6 +117,12 @@ export class MaintenanceService {
         where: { id: params.recordId },
       });
 
+      if (!isValidMaintenanceTransition(record.status, params.status)) {
+        throw new Error(
+          `Transisi status pemeliharaan tidak valid dari '${record.status}' ke '${params.status}'.`
+        );
+      }
+
       const updated = await tx.maintenanceRecord.update({
         where: { id: params.recordId },
         data: {
@@ -93,15 +134,22 @@ export class MaintenanceService {
         },
       });
 
-      // If completed or cancelled, return asset to AVAILABLE state
+      // If completed or cancelled, return asset to AVAILABLE state if currently IN_REPAIR
       if (
         params.status === MaintenanceStatus.COMPLETED ||
         params.status === MaintenanceStatus.CANCELLED
       ) {
-        await tx.asset.update({
+        const currentAsset = await tx.asset.findUnique({
           where: { id: record.assetId },
-          data: { status: AssetStatus.AVAILABLE },
+          select: { status: true },
         });
+
+        if (currentAsset?.status === AssetStatus.IN_REPAIR) {
+          await tx.asset.update({
+            where: { id: record.assetId },
+            data: { status: AssetStatus.AVAILABLE },
+          });
+        }
       }
 
       await recordAudit({
@@ -118,3 +166,4 @@ export class MaintenanceService {
     });
   }
 }
+

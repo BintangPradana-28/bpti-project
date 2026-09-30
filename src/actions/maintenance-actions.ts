@@ -8,7 +8,7 @@ import {
   CreateMaintenanceInput,
   UpdateMaintenanceStatusInput,
 } from "@/lib/validations/maintenance";
-import { requirePermission, PERMISSIONS } from "@/lib/session";
+import { requirePermission, requireAnyPermission, PERMISSIONS } from "@/lib/session";
 
 export async function createMaintenanceTicketAction(input: CreateMaintenanceInput) {
   try {
@@ -35,8 +35,19 @@ export async function createMaintenanceTicketAction(input: CreateMaintenanceInpu
 
 export async function updateMaintenanceStatusAction(input: UpdateMaintenanceStatusInput) {
   try {
-    const user = await requirePermission(PERMISSIONS.MAINTENANCE_UPDATE);
     const validated = updateMaintenanceStatusSchema.parse(input);
+
+    // If approving or cancelling, allow users with MAINTENANCE_APPROVE (e.g. MANAGER) or MAINTENANCE_UPDATE
+    // For other transitions (in progress, waiting parts, completed), require MAINTENANCE_UPDATE
+    const isApprovalOrCancel =
+      validated.status === "APPROVED" || validated.status === "CANCELLED";
+
+    const user = isApprovalOrCancel
+      ? await requireAnyPermission([
+          PERMISSIONS.MAINTENANCE_APPROVE,
+          PERMISSIONS.MAINTENANCE_UPDATE,
+        ])
+      : await requirePermission(PERMISSIONS.MAINTENANCE_UPDATE);
 
     const updated = await MaintenanceService.updateStatus({
       recordId: validated.ticketId,

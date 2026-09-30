@@ -109,7 +109,7 @@ export function Sidebar() {
       <div className="border-t border-slate-800/80 pt-3 px-2">
         <div className="text-[11px] text-slate-400">
           <div className="font-medium text-slate-400">BPTI Asset System</div>
-          <div className="text-slate-400">Balai Pelatihan TI • v1.0</div>
+          <div className="text-slate-400">BPTI UHAMKA • v1.0</div>
         </div>
       </div>
     </aside>

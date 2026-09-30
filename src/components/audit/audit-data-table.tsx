@@ -31,6 +31,8 @@ import {
   Filter,
 } from "lucide-react";
 
+import { useDebounce } from "@/hooks/use-debounce";
+
 export interface AuditRecord {
   id: string;
   timestamp: string | Date;
@@ -54,7 +56,8 @@ export function AuditDataTable({ data }: AuditDataTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([
     { id: "timestamp", desc: true },
   ]);
-  const [globalFilter, setGlobalFilter] = React.useState("");
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const debouncedSearch = useDebounce(searchTerm, 300);
   const [actionFilter, setActionFilter] = React.useState("ALL");
 
   // Filter options based on data
@@ -167,7 +170,7 @@ export function AuditDataTable({ data }: AuditDataTableProps) {
         header: () => <div className="text-right">Alamat IP</div>,
         cell: ({ row }) => (
           <div className="text-right font-mono text-xs text-slate-500">
-            {row.getValue("ipAddress") || "127.0.0.1"}
+            {row.getValue("ipAddress") || "-"}
           </div>
         ),
       },
@@ -180,10 +183,9 @@ export function AuditDataTable({ data }: AuditDataTableProps) {
     columns,
     state: {
       sorting,
-      globalFilter,
+      globalFilter: debouncedSearch,
     },
     onSortingChange: setSorting,
-    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -203,8 +205,8 @@ export function AuditDataTable({ data }: AuditDataTableProps) {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
           <Input
             placeholder="Cari aktor, aksi, keterangan..."
-            value={globalFilter ?? ""}
-            onChange={(e) => setGlobalFilter(e.target.value)}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-9 bg-slate-900/60 border-slate-800 text-white placeholder:text-slate-500 text-sm focus:border-sky-500"
           />
         </div>

@@ -28,3 +28,22 @@ export async function createUserAction(input: CreateUserInput) {
     };
   }
 }
+
+export async function toggleUserStatusAction(userId: string) {
+  try {
+    const actor = await requirePermission(PERMISSIONS.USER_MANAGE);
+    const updated = await UserService.toggleUserStatus(userId, actor.id);
+
+    revalidatePath("/users");
+    revalidatePath("/audit");
+    revalidatePath("/dashboard");
+
+    return { success: true, user: { id: updated.id, isActive: updated.isActive } };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Gagal memperbarui status pengguna.",
+    };
+  }
+}
+

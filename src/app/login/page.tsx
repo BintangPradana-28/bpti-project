@@ -51,7 +51,7 @@ export default function LoginPage() {
             Sistem Inventaris & Aset BPTI
           </h1>
           <p className="text-xs text-slate-400">
-            Balai Pelatihan dan Pengembangan Teknologi Informasi
+            Badan Pengembangan Teknologi Informasi (BPTI) - UHAMKA
           </p>
         </div>
 
