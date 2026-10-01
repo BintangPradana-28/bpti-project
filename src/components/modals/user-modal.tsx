@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, UserPlus, AlertCircle, CheckCircle2, Lock } from "lucide-react";
 import { createUserAction } from "@/actions/user-actions";
+import { APP_CONFIG } from "@/lib/constants";
 
 interface UserModalProps {
   roles: Array<{ id: string; name: string }>;
@@ -114,7 +115,7 @@ export function UserModal({ roles, departments }: UserModalProps) {
                 </label>
                 <Input
                   type="email"
-                  placeholder="cth: fauzi@bpti.go.id"
+                  placeholder={`cth: staf@${APP_CONFIG.ORG_EMAIL_DOMAIN}`}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required

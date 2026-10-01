@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { recordAudit } from "@/lib/audit";
-import { hashPassword } from "better-auth/crypto";
+import { hashPassword } from "@/lib/crypto";
 
 export interface CreateUserDTO {
   name: string;

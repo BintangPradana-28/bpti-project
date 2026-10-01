@@ -1,6 +1,7 @@
 import ExcelJS from "exceljs";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import { APP_CONFIG } from "@/lib/constants";
 
 function escapeCsvCell(val: unknown): string {
   if (val === null || val === undefined) return "";
@@ -27,7 +28,7 @@ export async function generateXlsx(
   rows: (string | number | null | undefined)[][]
 ): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = "BPTI UHAMKA - Sistem Inventaris & Manajemen Aset";
+  workbook.creator = `${APP_CONFIG.ORG_ACRONYM} UHAMKA - ${APP_CONFIG.APP_NAME}`;
   workbook.created = new Date();
 
   const worksheet = workbook.addWorksheet("Laporan", {
@@ -37,7 +38,7 @@ export async function generateXlsx(
   // Title Row
   worksheet.mergeCells(1, 1, 1, headers.length);
   const titleCell = worksheet.getCell(1, 1);
-  titleCell.value = `BIRO PENGELOLAAN TEKNOLOGI INFORMASI (BPTI) UHAMKA`;
+  titleCell.value = APP_CONFIG.ORG_FULL_NAME.toUpperCase();
   titleCell.font = { bold: true, size: 14, color: { argb: "FF0F172A" } };
   titleCell.alignment = { horizontal: "center", vertical: "middle" };
   worksheet.getRow(1).height = 24;
@@ -131,7 +132,7 @@ export async function generatePdf(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13);
   doc.setTextColor(15, 23, 42); // slate-900
-  doc.text("BIRO PENGELOLAAN TEKNOLOGI INFORMASI (BPTI) UHAMKA", pageWidth / 2, 35, {
+  doc.text(APP_CONFIG.ORG_FULL_NAME.toUpperCase(), pageWidth / 2, 35, {
     align: "center",
   });
 

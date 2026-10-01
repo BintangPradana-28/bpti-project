@@ -7,6 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Building2, Lock, Mail, AlertCircle, ArrowRight } from "lucide-react";
+import { APP_CONFIG } from "@/lib/constants";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -48,10 +49,10 @@ export default function LoginPage() {
             <Building2 className="h-6 w-6 text-slate-950" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-white">
-            Sistem Inventaris & Aset BPTI
+            {APP_CONFIG.APP_NAME}
           </h1>
           <p className="text-xs text-slate-400">
-            Badan Pengembangan Teknologi Informasi (BPTI) - UHAMKA
+            {APP_CONFIG.ORG_FULL_NAME}
           </p>
         </div>
 
@@ -81,7 +82,7 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@bpti.go.id"
+                  placeholder={APP_CONFIG.DEFAULT_ADMIN_EMAIL}
                   required
                   className="bg-slate-950/60 border-slate-800 focus:border-sky-500 text-white placeholder:text-slate-600 text-sm"
                 />

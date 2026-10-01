@@ -68,7 +68,7 @@ Dua fakta berikut awalnya berpotensi disalahpahami; masing-masing sudah diverifi
 Bukan celah keamanan (arahnya *fail-closed* — MANAGER kehilangan kemampuan, bukan mendapat akses berlebih), tapi bug otorisasi yang nyata. Detail lengkap di `22-authorization-matrix.md` §3.
 
 ### 🟢 T3 — Kredensial admin default ditampilkan sebagai teks biasa di halaman login
-**Bukti:** `login/page.tsx` menampilkan `admin@bpti.go.id` / `AdminBpti2026!` langsung di UI. Identik dengan yang ditulis `prisma/seed.ts`.
+**Bukti:** `login/page.tsx` sebelumnya menampilkan `admin@uhamka.ac.id` / `AdminBpti2026!` langsung di UI. Identik dengan yang ditulis `prisma/seed.ts`.
 **Dampak:** Nyaman untuk demo internal tim, tapi harus disembunyikan di balik pemeriksaan `NODE_ENV !== "production"` sebelum demo ke mentor atau deployment nyata mana pun.
 
 ### 🔴 T4 — Tidak ada rate limiting pada `/login`

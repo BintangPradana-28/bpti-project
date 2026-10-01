@@ -2,6 +2,8 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./prisma";
 
+import { hashPassword, verifyPassword } from "./crypto";
+
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "mysql",
@@ -9,6 +11,10 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     autoSignIn: true,
+    password: {
+      hash: async (password: string) => hashPassword(password),
+      verify: async ({ password, hash }) => verifyPassword(password, hash),
+    },
   },
   user: {
     additionalFields: {

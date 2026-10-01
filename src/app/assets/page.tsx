@@ -6,6 +6,7 @@ import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@
 import { AssetService } from "@/modules/assets/asset-service";
 import { prisma } from "@/lib/prisma";
 import { AssetModal } from "@/components/modals/asset-modal";
+import { BulkImportModal } from "@/components/modals/bulk-import-modal";
 import { Pagination } from "@/components/ui/pagination";
 import { TableFilterBar } from "@/components/ui/table-filter-bar";
 import { AssetStatus } from "@prisma/client";
@@ -135,6 +136,7 @@ export default async function AssetsPage({ searchParams }: AssetsPageProps) {
           </div>
 
           <div className="flex items-center gap-2">
+            <BulkImportModal type="assets" />
             <AssetModal locations={locations} departments={departments} />
           </div>
         </div>

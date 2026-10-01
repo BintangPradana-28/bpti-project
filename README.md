@@ -178,8 +178,8 @@ Register ini diperbarui mengikuti setiap snapshot baru. Setiap temuan menyertaka
 **Rekomendasi (cepat, 1 baris):** ganti `"lint": "tsc --noEmit"` menjadi `"lint": "next lint"` (nilai aslinya di v1/v2) di `package.json`, dan tambahkan langkah `pnpm run build` di `ci.yml`.
 
 ### 🟢 #7 — Kredensial admin default ditampilkan sebagai teks biasa di halaman login
-**Bukti:** `login/page.tsx:123-133` menampilkan `admin@bpti.go.id` / `AdminBpti2026!` langsung di UI sebagai "Kredensial Default (Seeded Administrator)".
-**Dampak:** Nyaman untuk demo/pengembangan, tapi harus dihapus atau disembunyikan di balik flag `NODE_ENV !== "production"` sebelum deployment nyata mana pun — kredensial ini identik dengan yang ditulis `prisma/seed.ts:81` dan `docker-compose.yml`.
+**Bukti:** `login/page.tsx` sebelumnya menampilkan `admin@uhamka.ac.id` / `AdminBpti2026!` langsung di UI sebagai "Kredensial Default (Seeded Administrator)".
+**Dampak:** Nyaman untuk demo/pengembangan, tapi harus dihapus atau disembunyikan di balik flag `NODE_ENV !== "production"` sebelum deployment nyata mana pun — kredensial ini identik dengan yang ditulis `prisma/seed.ts` dan `docker-compose.yml`.
 
 ### 🔴 #9 (BARU sejak v4) — Kredensial database di-hardcode sebagai fallback di source code
 **Bukti:** `prisma.config.ts:6-8` dan `prisma/seed.ts:6-10` sama-sama menulis `process.env.DATABASE_URL || "mysql://bpti_user:bpti_secret_2026@localhost:3306/bpti_db"` — kalau `DATABASE_URL` tidak diset, aplikasi diam-diam jatuh ke kredensial ini, yang berarti kredensial itu **tersimpan permanen di riwayat git** begitu file ini di-commit.

@@ -5,6 +5,7 @@ import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@
 import { InventoryService } from "@/modules/inventory/inventory-service";
 import { prisma } from "@/lib/prisma";
 import { InventoryModals } from "@/components/modals/inventory-modal";
+import { BulkImportModal } from "@/components/modals/bulk-import-modal";
 import { Pagination } from "@/components/ui/pagination";
 import { TableFilterBar } from "@/components/ui/table-filter-bar";
 import { requirePagePermission, PERMISSIONS } from "@/lib/session";
@@ -95,11 +96,14 @@ export default async function InventoryPage({ searchParams }: InventoryPageProps
             </span>
           </div>
 
-          <InventoryModals
-            categories={categories}
-            locations={locations}
-            items={modalItems}
-          />
+          <div className="flex items-center gap-2">
+            <BulkImportModal type="inventory" />
+            <InventoryModals
+              categories={categories}
+              locations={locations}
+              items={modalItems}
+            />
+          </div>
         </div>
 
         {/* Search & Category Filter Bar */}

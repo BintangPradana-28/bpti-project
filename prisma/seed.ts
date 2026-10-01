@@ -1,6 +1,6 @@
 import { PrismaClient, MovementType, AssetStatus, AssetCondition, LocationType } from "@prisma/client";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
-import { hashPassword } from "better-auth/crypto";
+import { hashPassword } from "../src/lib/crypto";
 import QRCode from "qrcode";
 
 const connectionString = process.env.DATABASE_URL;
@@ -57,18 +57,18 @@ async function main() {
   // 3. Super Admin User
   const superAdminRole = await prisma.role.findUnique({ where: { name: "SUPER_ADMIN" } });
   const adminUser = await prisma.user.upsert({
-    where: { email: "admin@bpti.go.id" },
+    where: { email: "admin@uhamka.ac.id" },
     update: {},
     create: {
       name: "System Administrator",
-      email: "admin@bpti.go.id",
+      email: "admin@uhamka.ac.id",
       emailVerified: true,
       roleId: superAdminRole?.id,
       departmentId: itDept.id,
       isActive: true,
     },
   });
-  console.log("✓ Super Admin seeded: admin@bpti.go.id");
+  console.log("✓ Super Admin seeded: admin@uhamka.ac.id");
 
   // Create or update credential Account for Better Auth login
   const hashedPassword = await hashPassword("AdminBpti2026!");

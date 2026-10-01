@@ -15,6 +15,7 @@ import {
   Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { APP_CONFIG } from "@/lib/constants";
 
 const NAV_ITEMS = [
   {
@@ -108,8 +109,8 @@ export function Sidebar() {
       {/* Organizational Footer */}
       <div className="border-t border-slate-800/80 pt-3 px-2">
         <div className="text-[11px] text-slate-400">
-          <div className="font-medium text-slate-400">BPTI Asset System</div>
-          <div className="text-slate-400">BPTI UHAMKA • v1.0</div>
+          <div className="font-medium text-slate-300">{APP_CONFIG.APP_SHORT_NAME}</div>
+          <div className="text-slate-500">{APP_CONFIG.ORG_ACRONYM} UHAMKA • v{APP_CONFIG.APP_VERSION}</div>
         </div>
       </div>
     </aside>
