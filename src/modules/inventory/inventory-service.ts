@@ -15,7 +15,18 @@ export interface CreateItemDTO {
 export interface StockTransactionDTO {
   itemId: string;
   locationId: string;
+  toLocationId?: string;
   type: MovementType;
+  quantity: number;
+  actorId: string;
+  reason?: string;
+  referenceNumber?: string;
+}
+
+export interface TransferStockDTO {
+  itemId: string;
+  fromLocationId: string;
+  toLocationId: string;
   quantity: number;
   actorId: string;
   reason?: string;
@@ -162,12 +173,189 @@ export class InventoryService {
   }
 
   /**
+   * Two-Way Atomic Stock Transfer between Locations.
+   * Decrements source stock, increments destination stock,
+   * writes immutable StockMovement records on both locations,
+   * checks minimum stock alerts, and logs central audit.
+   */
+  static async transferStock(dto: TransferStockDTO) {
+    if (dto.quantity <= 0) {
+      throw new Error("Jumlah transfer harus lebih besar dari nol.");
+    }
+
+    if (dto.fromLocationId === dto.toLocationId) {
+      throw new Error("Lokasi tujuan transfer tidak boleh sama dengan lokasi asal.");
+    }
+
+    return prisma.$transaction(async (tx) => {
+      // 1. Fetch item, source location, and destination location
+      const [item, fromLocation, toLocation] = await Promise.all([
+        tx.inventoryItem.findUniqueOrThrow({
+          where: { id: dto.itemId },
+        }),
+        tx.location.findUniqueOrThrow({
+          where: { id: dto.fromLocationId },
+        }),
+        tx.location.findUniqueOrThrow({
+          where: { id: dto.toLocationId },
+        }),
+      ]);
+
+      // 2. Fetch and validate source stock
+      const sourceStock = await tx.stock.findUnique({
+        where: {
+          itemId_locationId: {
+            itemId: dto.itemId,
+            locationId: dto.fromLocationId,
+          },
+        },
+      });
+
+      const currentSourceQty = sourceStock ? sourceStock.quantity : 0;
+      if (currentSourceQty < dto.quantity) {
+        throw new Error(
+          `Stok di lokasi asal (${fromLocation.name}) tidak mencukupi. Tersedia: ${currentSourceQty}, Diminta: ${dto.quantity}`
+        );
+      }
+
+      const newSourceQty = currentSourceQty - dto.quantity;
+
+      // 3. Update source stock
+      const updatedSourceStock = await tx.stock.update({
+        where: { id: sourceStock!.id },
+        data: { quantity: newSourceQty },
+      });
+
+      // 4. Create source stock movement (outbound transfer)
+      const outMovement = await tx.stockMovement.create({
+        data: {
+          itemId: dto.itemId,
+          locationId: dto.fromLocationId,
+          type: MovementType.TRANSFER,
+          quantity: dto.quantity,
+          previousQty: currentSourceQty,
+          resultingQty: newSourceQty,
+          referenceNumber: dto.referenceNumber,
+          reason: dto.reason
+            ? `[Transfer Keluar ke ${toLocation.name}] ${dto.reason}`
+            : `Transfer keluar ke ${toLocation.name}`,
+          actorId: dto.actorId,
+        },
+      });
+
+      // 5. Fetch or initialize destination stock
+      let destStock = await tx.stock.findUnique({
+        where: {
+          itemId_locationId: {
+            itemId: dto.itemId,
+            locationId: dto.toLocationId,
+          },
+        },
+      });
+
+      const currentDestQty = destStock ? destStock.quantity : 0;
+      const newDestQty = currentDestQty + dto.quantity;
+
+      if (!destStock) {
+        destStock = await tx.stock.create({
+          data: {
+            itemId: dto.itemId,
+            locationId: dto.toLocationId,
+            quantity: newDestQty,
+          },
+        });
+      } else {
+        destStock = await tx.stock.update({
+          where: { id: destStock.id },
+          data: { quantity: newDestQty },
+        });
+      }
+
+      // 6. Create destination stock movement (inbound transfer)
+      const inMovement = await tx.stockMovement.create({
+        data: {
+          itemId: dto.itemId,
+          locationId: dto.toLocationId,
+          type: MovementType.TRANSFER,
+          quantity: dto.quantity,
+          previousQty: currentDestQty,
+          resultingQty: newDestQty,
+          referenceNumber: dto.referenceNumber,
+          reason: dto.reason
+            ? `[Transfer Masuk dari ${fromLocation.name}] ${dto.reason}`
+            : `Transfer masuk dari ${fromLocation.name}`,
+          actorId: dto.actorId,
+        },
+      });
+
+      // 7. Check if source stock falls below minimum threshold
+      if (newSourceQty <= item.minStock) {
+        await tx.systemAlert.create({
+          data: {
+            type: newSourceQty === 0 ? "OUT_OF_STOCK" : "LOW_STOCK",
+            severity: newSourceQty === 0 ? "CRITICAL" : "WARNING",
+            title: newSourceQty === 0 ? `Stock Habis: ${item.name}` : `Low Stock: ${item.name}`,
+            message: `Stok tersisa ${newSourceQty} (ambang batas: ${item.minStock}) di lokasi ${fromLocation.name} pasca transfer.`,
+            entity: "InventoryItem",
+            entityId: item.id,
+          },
+        });
+      }
+
+      // 8. Record audit trail
+      await recordAudit({
+        action: "stock.transfer",
+        entity: "Stock",
+        entityId: updatedSourceStock.id,
+        actorId: dto.actorId,
+        beforeState: {
+          sourceLocationId: dto.fromLocationId,
+          sourceQuantity: currentSourceQty,
+          destLocationId: dto.toLocationId,
+          destQuantity: currentDestQty,
+        },
+        afterState: {
+          sourceLocationId: dto.fromLocationId,
+          sourceQuantity: newSourceQty,
+          destLocationId: dto.toLocationId,
+          destQuantity: newDestQty,
+        },
+        notes: `Transfer ${dto.quantity} ${item.unit} '${item.name}' dari ${fromLocation.name} ke ${toLocation.name}`,
+      });
+
+      return {
+        sourceStock: updatedSourceStock,
+        destStock,
+        outMovement,
+        inMovement,
+      };
+    });
+  }
+
+  /**
    * Controlled Transactional Stock Mutation
    * Enforces non-negative stock and writes to immutable StockMovement ledger.
    */
   static async transactStock(dto: StockTransactionDTO) {
     if (dto.quantity <= 0) {
       throw new Error("Quantity must be a positive integer greater than zero.");
+    }
+
+    if (dto.type === MovementType.TRANSFER) {
+      if (!dto.toLocationId) {
+        throw new Error(
+          "Transfer stok memerlukan parameter lokasi tujuan (toLocationId)."
+        );
+      }
+      return this.transferStock({
+        itemId: dto.itemId,
+        fromLocationId: dto.locationId,
+        toLocationId: dto.toLocationId,
+        quantity: dto.quantity,
+        actorId: dto.actorId,
+        reason: dto.reason,
+        referenceNumber: dto.referenceNumber,
+      });
     }
 
     return prisma.$transaction(async (tx) => {

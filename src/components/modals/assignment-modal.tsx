@@ -161,7 +161,7 @@ export function AssignmentModals({
               >
                 {availableAssets.map((a) => (
                   <option key={a.id} value={a.id}>
-                    {a.assetTag} — {a.name}
+                    {a.assetTag} - {a.name}
                   </option>
                 ))}
               </select>
@@ -277,7 +277,7 @@ export function AssignmentModals({
             >
               {allAssets.map((a) => (
                 <option key={a.id} value={a.id}>
-                  {a.assetTag} — {a.name}
+                  {a.assetTag} - {a.name}
                 </option>
               ))}
             </select>

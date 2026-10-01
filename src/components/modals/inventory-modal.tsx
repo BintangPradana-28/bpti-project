@@ -4,8 +4,8 @@ import { useState } from "react";
 import { Dialog, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, ArrowDownLeft, ArrowUpRight, AlertCircle, CheckCircle2 } from "lucide-react";
-import { createItemAction, transactStockAction } from "@/actions/inventory-actions";
+import { Plus, ArrowDownLeft, ArrowUpRight, ArrowRightLeft, AlertCircle, CheckCircle2 } from "lucide-react";
+import { createItemAction, transactStockAction, transferStockAction } from "@/actions/inventory-actions";
 import { MovementType } from "@/types/enums";
 
 interface InventoryModalsProps {
@@ -32,6 +32,15 @@ export function InventoryModals({ categories, locations, items }: InventoryModal
   const [stockQuantity, setStockQuantity] = useState(10);
   const [stockReason, setStockReason] = useState("");
   const [referenceNumber, setReferenceNumber] = useState("");
+
+  // Stock Transfer Dialog state
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [transferItemId, setTransferItemId] = useState(items[0]?.id || "");
+  const [transferFromLocationId, setTransferFromLocationId] = useState(locations[0]?.id || "");
+  const [transferToLocationId, setTransferToLocationId] = useState(locations[1]?.id || locations[0]?.id || "");
+  const [transferQuantity, setTransferQuantity] = useState(5);
+  const [transferReason, setTransferReason] = useState("");
+  const [transferRefNumber, setTransferRefNumber] = useState("");
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,6 +104,39 @@ export function InventoryModals({ categories, locations, items }: InventoryModal
     }
   };
 
+  const handleTransferStock = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (transferFromLocationId === transferToLocationId) {
+      setError("Lokasi tujuan transfer tidak boleh sama dengan lokasi asal.");
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    const res = await transferStockAction({
+      itemId: transferItemId,
+      fromLocationId: transferFromLocationId,
+      toLocationId: transferToLocationId,
+      quantity: Number(transferQuantity),
+      reason: transferReason.trim() || undefined,
+      referenceNumber: transferRefNumber.trim() || undefined,
+    });
+
+    setIsLoading(false);
+    if (!res.success) {
+      setError(res.error || "Gagal memproses transfer stok.");
+    } else {
+      setSuccess("Transfer stok antarlokasi berhasil diproses!");
+      setTimeout(() => {
+        setTransferOpen(false);
+        setSuccess(null);
+        setTransferReason("");
+        setTransferRefNumber("");
+      }, 1000);
+    }
+  };
+
   return (
     <>
       {/* Trigger Buttons */}
@@ -127,6 +169,20 @@ export function InventoryModals({ categories, locations, items }: InventoryModal
         >
           <ArrowUpRight className="h-3.5 w-3.5 text-rose-400" />
           Stock Out
+        </Button>
+
+        <Button
+          size="sm"
+          variant="outline"
+          className="text-xs gap-1.5"
+          onClick={() => {
+            setError(null);
+            setSuccess(null);
+            setTransferOpen(true);
+          }}
+        >
+          <ArrowRightLeft className="h-3.5 w-3.5 text-amber-400" />
+          Transfer Stock
         </Button>
 
         <Button
@@ -298,7 +354,7 @@ export function InventoryModals({ categories, locations, items }: InventoryModal
             >
               {items.map((i) => (
                 <option key={i.id} value={i.id}>
-                  {i.code} — {i.name} ({i.unit})
+                  {i.code} - {i.name} ({i.unit})
                 </option>
               ))}
             </select>
@@ -374,6 +430,136 @@ export function InventoryModals({ categories, locations, items }: InventoryModal
               }`}
             >
               {isLoading ? "Memproses..." : stockType === MovementType.IN ? "Simpan Stock In" : "Proses Stock Out"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </Dialog>
+
+      {/* Stock Transfer Dialog */}
+      <Dialog open={transferOpen} onOpenChange={setTransferOpen}>
+        <DialogHeader>
+          <DialogTitle>Transfer Stok Antarlokasi</DialogTitle>
+          <DialogDescription>
+            Pindahkan stok barang inventaris dari satu lokasi gudang ke lokasi gudang lainnya secara atomik.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleTransferStock} className="space-y-3.5 pt-2">
+          {error && (
+            <div className="p-2.5 rounded bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+          {success && (
+            <div className="p-2.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              <span>{success}</span>
+            </div>
+          )}
+
+          <div className="space-y-1">
+            <label className="text-xs text-slate-300 font-medium">Item Barang</label>
+            <select
+              value={transferItemId}
+              onChange={(e) => setTransferItemId(e.target.value)}
+              className="w-full h-9 rounded-md bg-slate-950 border border-slate-800 px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-sky-500"
+            >
+              {items.map((i) => (
+                <option key={i.id} value={i.id}>
+                  {i.code} - {i.name} ({i.unit})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-xs text-slate-300 font-medium">Dari Lokasi (Asal)</label>
+              <select
+                value={transferFromLocationId}
+                onChange={(e) => setTransferFromLocationId(e.target.value)}
+                className="w-full h-9 rounded-md bg-slate-950 border border-slate-800 px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-sky-500"
+              >
+                {locations.map((loc) => (
+                  <option key={loc.id} value={loc.id}>
+                    {loc.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-slate-300 font-medium">Ke Lokasi (Tujuan)</label>
+              <select
+                value={transferToLocationId}
+                onChange={(e) => setTransferToLocationId(e.target.value)}
+                className="w-full h-9 rounded-md bg-slate-950 border border-slate-800 px-3 text-xs text-white focus:outline-none focus:ring-1 focus:ring-sky-500"
+              >
+                {locations.map((loc) => (
+                  <option key={loc.id} value={loc.id}>
+                    {loc.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {transferFromLocationId === transferToLocationId && (
+            <p className="text-[11px] text-amber-400">
+              * Lokasi tujuan tidak boleh sama dengan lokasi asal transfer.
+            </p>
+          )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-xs text-slate-300 font-medium">Jumlah Transfer</label>
+              <Input
+                type="number"
+                min={1}
+                value={transferQuantity}
+                onChange={(e) => setTransferQuantity(parseInt(e.target.value) || 0)}
+                className="h-9 bg-slate-950 border-slate-800 text-xs text-white"
+                required
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-slate-300 font-medium">No. Referensi / Surat Jalan</label>
+              <Input
+                placeholder="TRF-2026-001"
+                value={transferRefNumber}
+                onChange={(e) => setTransferRefNumber(e.target.value)}
+                className="h-9 bg-slate-950 border-slate-800 text-xs text-white"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs text-slate-300 font-medium">Keterangan / Keperluan</label>
+            <Input
+              placeholder="Contoh: Distribusi kebutuhan lab komputer lantai 2"
+              value={transferReason}
+              onChange={(e) => setTransferReason(e.target.value)}
+              className="h-9 bg-slate-950 border-slate-800 text-xs text-white"
+            />
+          </div>
+
+          <DialogFooter className="pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="text-xs"
+              onClick={() => setTransferOpen(false)}
+            >
+              Batal
+            </Button>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={isLoading || transferFromLocationId === transferToLocationId}
+              className="text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 font-medium"
+            >
+              {isLoading ? "Memproses..." : "Proses Transfer Stok"}
             </Button>
           </DialogFooter>
         </form>

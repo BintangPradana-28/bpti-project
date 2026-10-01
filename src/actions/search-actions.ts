@@ -101,7 +101,7 @@ export async function globalSearchAction(query: string): Promise<{
       results.push({
         type: "asset",
         id: asset.id,
-        title: `${asset.assetTag} — ${asset.name}`,
+        title: `${asset.assetTag} - ${asset.name}`,
         subtitle: `${asset.brand || ""} ${asset.model || ""} • Status: ${asset.status}`,
         badge: "Aset",
         url: `/assets/${asset.id}`,

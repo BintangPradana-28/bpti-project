@@ -18,6 +18,7 @@ export const createItemSchema = z.object({
 export const transactStockSchema = z.object({
   itemId: z.string().min(1, "Item wajib dipilih"),
   locationId: z.string().min(1, "Lokasi wajib dipilih"),
+  toLocationId: z.string().optional(),
   type: z.nativeEnum(MovementType, {
     errorMap: () => ({ message: "Tipe mutasi tidak valid" }),
   }),
@@ -26,5 +27,20 @@ export const transactStockSchema = z.object({
   referenceNumber: z.string().optional(),
 });
 
+export const transferStockSchema = z
+  .object({
+    itemId: z.string().min(1, "Item barang wajib dipilih"),
+    fromLocationId: z.string().min(1, "Lokasi asal wajib dipilih"),
+    toLocationId: z.string().min(1, "Lokasi tujuan wajib dipilih"),
+    quantity: z.coerce.number().int().positive("Jumlah transfer harus bernilai positif (> 0)"),
+    reason: z.string().optional(),
+    referenceNumber: z.string().optional(),
+  })
+  .refine((data) => data.fromLocationId !== data.toLocationId, {
+    message: "Lokasi tujuan tidak boleh sama dengan lokasi asal",
+    path: ["toLocationId"],
+  });
+
 export type CreateItemInput = z.infer<typeof createItemSchema>;
 export type TransactStockInput = z.infer<typeof transactStockSchema>;
+export type TransferStockInput = z.infer<typeof transferStockSchema>;

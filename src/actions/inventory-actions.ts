@@ -5,8 +5,10 @@ import { InventoryService } from "@/modules/inventory/inventory-service";
 import {
   createItemSchema,
   transactStockSchema,
+  transferStockSchema,
   CreateItemInput,
   TransactStockInput,
+  TransferStockInput,
 } from "@/lib/validations/inventory";
 import { requirePermission, PERMISSIONS } from "@/lib/session";
 
@@ -55,6 +57,33 @@ export async function transactStockAction(input: TransactStockInput) {
     return {
       success: false,
       error: error instanceof Error ? error.message : "Gagal memproses mutasi stok.",
+    };
+  }
+}
+
+export async function transferStockAction(input: TransferStockInput) {
+  try {
+    // 1. RBAC authorization check
+    const user = await requirePermission(PERMISSIONS.STOCK_TRANSACT);
+
+    // 2. Zod validation
+    const validated = transferStockSchema.parse(input);
+
+    // 3. Service execution
+    const result = await InventoryService.transferStock({
+      ...validated,
+      actorId: user.id,
+    });
+
+    revalidatePath("/inventory");
+    revalidatePath("/dashboard");
+    revalidatePath("/reports");
+    revalidatePath("/audit");
+    return { success: true, result };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Gagal memproses transfer stok.",
     };
   }
 }
