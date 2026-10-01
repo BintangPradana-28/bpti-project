@@ -5,7 +5,11 @@ import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@
 import { MapPin, Building, Layers, Boxes, Laptop } from "lucide-react";
 import { LocationService } from "@/modules/locations/location-service";
 import { prisma } from "@/lib/prisma";
-import { LocationModal } from "@/components/modals/location-modal";
+import {
+  LocationModal,
+  EditLocationModal,
+  DeleteLocationDialog,
+} from "@/components/modals/location-modal";
 import { requirePageAuth } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -147,12 +151,13 @@ export default async function LocationsPage() {
                   <TableHead className="text-right">Sub-lokasi</TableHead>
                   <TableHead className="text-right">Item Stok</TableHead>
                   <TableHead className="text-right">Aset</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {locations.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-12 text-slate-400 text-sm">
+                    <TableCell colSpan={9} className="text-center py-12 text-slate-400 text-sm">
                       Belum ada struktur lokasi yang dikonfigurasi.
                       <p className="text-xs text-slate-500 mt-1">
                         Klik tombol &ldquo;Add Location&rdquo; di atas untuk menambahkan gedung, lantai, atau ruangan.
@@ -200,6 +205,16 @@ export default async function LocationsPage() {
                           <Laptop className="h-3 w-3 inline" />
                           {loc._count?.assets || 0}
                         </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <EditLocationModal
+                            location={loc}
+                            parentLocations={locations}
+                            departments={departments}
+                          />
+                          <DeleteLocationDialog location={loc} />
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
