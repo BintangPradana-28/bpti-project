@@ -6,6 +6,7 @@ import { InventoryService } from "@/modules/inventory/inventory-service";
 import { prisma } from "@/lib/prisma";
 import { InventoryModals } from "@/components/modals/inventory-modal";
 import { BulkImportModal } from "@/components/modals/bulk-import-modal";
+import { CategoryModal, CategoryWithCount } from "@/components/modals/category-modal";
 import { Pagination } from "@/components/ui/pagination";
 import { TableFilterBar } from "@/components/ui/table-filter-bar";
 import { requirePagePermission, PERMISSIONS } from "@/lib/session";
@@ -33,7 +34,7 @@ export default async function InventoryPage({ searchParams }: InventoryPageProps
   let items: ItemType[] = [];
   let total = 0;
   let totalPages = 1;
-  let categories: Array<{ id: string; name: string }> = [];
+  let categories: CategoryWithCount[] = [];
   let locations: Array<{ id: string; name: string; code: string }> = [];
   let modalItems: Array<{ id: string; name: string; code: string; unit: string }> = [];
 
@@ -45,7 +46,16 @@ export default async function InventoryPage({ searchParams }: InventoryPageProps
         page,
         pageSize,
       }),
-      prisma.category.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
+      prisma.category.findMany({
+        select: {
+          id: true,
+          code: true,
+          name: true,
+          description: true,
+          _count: { select: { items: true } },
+        },
+        orderBy: { name: "asc" },
+      }),
       prisma.location.findMany({ select: { id: true, name: true, code: true }, orderBy: { name: "asc" } }),
       prisma.inventoryItem.findMany({
         where: { isActive: true },
@@ -97,6 +107,7 @@ export default async function InventoryPage({ searchParams }: InventoryPageProps
           </div>
 
           <div className="flex items-center gap-2">
+            <CategoryModal categories={categories} />
             <BulkImportModal type="inventory" />
             <InventoryModals
               categories={categories}
