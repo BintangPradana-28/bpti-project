@@ -31,7 +31,9 @@ function createPrismaClient(): PrismaClient {
       password,
       database,
       connectionLimit: 15,
-      connectTimeout: 10000,
+      connectTimeout: 15000,
+      acquireTimeout: 20000,
+      idleTimeout: 60000,
     });
 
   if (process.env.NODE_ENV !== "production") {

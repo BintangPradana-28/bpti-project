@@ -1,7 +1,9 @@
 import { PrismaClient, MovementType, AssetStatus, AssetCondition, LocationType } from "@prisma/client";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
-import { hashPassword } from "../src/lib/crypto";
+import bcrypt from "bcryptjs";
 import QRCode from "qrcode";
+
+const hashPassword = async (password: string) => bcrypt.hash(password, 10);
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
